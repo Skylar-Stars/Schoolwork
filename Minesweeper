@@ -1,0 +1,519 @@
+import pygame
+import random
+pygame.init()
+
+# Base game variables
+clock = pygame.time.Clock()
+nums = 1
+ # Screen Varables
+sW = 400
+sH = 400
+CW = 40
+screen = pygame.display.set_mode((sW, sH))
+  # Sounds
+explosion = pygame.mixer.Sound('Explosive ball - hit.wav')
+WON = pygame.mixer.Sound('Stage complete - New stage spawn in.wav')
+start_button = pygame.mixer.Sound('Click-button.wav')
+difficulty_button = pygame.mixer.Sound('Click-button2.wav')
+hover = pygame.mixer.Sound('Hover-button.wav')
+  # Cooldowns | game state conditions 
+Winning = False
+gameOver = False
+start = False
+running = True
+
+cooldown = False
+game_cooldown = True
+dev_cool = True
+first_click = True
+button_cooldown = True
+k = True
+  # Timers
+dot_timer = 0
+Game_OverTimer = 60
+Game_Timer = 0
+countdown_durration = 3000
+Game_TimeLimit = 90
+Game_OverLimit = 0
+game_over_time = pygame.time.get_ticks()
+current_time = pygame.time.get_ticks()
+time_elasped = current_time - game_over_time
+time_left = max(0,(countdown_durration - time_elasped)//1000)
+dot_phase = 0
+  # Texts
+dots = "."
+Font = pygame.font.SysFont(None, 50)
+font = pygame.font.SysFont(None,50)
+Loading_Txt = pygame.font.SysFont(None, 50).render(f"LOADING{dots}",True,"White")
+gameover_txt= Font.render("Game Over", True, "white")
+   # Mouse
+mouse = pygame.mouse.get_pos()
+click = pygame.mouse.get_pressed()
+   # difficulty
+difficulty = "Easy"
+difficulties = ["Easy", "Medium", "Hard"]
+  # Cell
+cell_size = sW // 10
+number = []
+zero_queue = []
+correct_flags = 0
+total_flags = 0
+  # Bombs
+bomb_count = 10
+bomb_number = 0
+bomb_placed = 0
+bomb_hasPlaced = []
+  # BASE GRID VALUES
+flaged = []
+grid = []
+opened = []
+open_count = 0
+
+for i in range(10): # Init grid
+  grid.append([0] * 10)
+  opened.append([False] * 10)
+  flaged.append([False] * 10)
+  number.append([Font.render("", True, "white")] * 10)
+
+# Dictionaries
+difficulty_settings = {
+  # Grid: (cols, rows, bomb_count)
+  "Easy": (10,10,10),
+  "Medium":(16,16,39),
+  "Hard": (20,20,99)
+}
+# Cell Size
+difficulty_ = {
+  "Easy": 40,
+  "Medium": 25,
+  "Hard": 20
+}
+# Number size
+difficulty_Size = {
+  "Easy": 50,
+  "Medium": 25,
+  "Hard": 20
+}
+# Number coords
+difficulty_S = {
+  "Easy": (11,5),
+  "Medium": (9,5),
+  "Hard": (7,5)
+}
+cell_color = {
+  # Cell
+  "unopen": "grey",  # Unopened
+  "open": "lightgrey", # oppened
+  "flag": "darkred",  # Flaged
+  "bomb": "maroon",  # Bomb
+  
+  # numbers
+  0: "white",  # 0 Bombs
+  1: "cyan",  # 1 Bomb
+  2: "green",  # 2 Bombs
+  3: "teal",  # 3 Bombs
+  4: "blue",  # 4 Bombs
+  5: "red",  # 5 Bombs
+  6: "turquoise",  # 6 Bombs
+  7: "purple",  # 7 Bombs
+  8: "yellow"  # 8 Bombs
+}
+cols,rows, bomb_V = difficulty_settings[difficulty]
+
+# Functions
+def timer(t): # Timer function (It's just easier)
+  clock.tick(60)
+  G_timer = 0
+  G_timelimit = t
+  while G_timer <= G_timelimit:
+    G_timer += 1
+  return True
+  
+  # Game Setup
+def initialize_game(): # Setup for game
+  global grid, opened,flaged, number, bomb_count, bomb_placed, start, CW, zero_queue, cols, rows, font, s_w, s_h
+  s_w, s_h = difficulty_S[difficulty]
+  cols,rows, bomb_V = difficulty_settings[difficulty]
+  CW = difficulty_[difficulty]
+  grid = []
+  opened = []
+  flaged = []
+  number = []
+  bomb_count = bomb_V
+  zero_queue = []
+  font = pygame.font.SysFont(None,difficulty_Size.get(difficulty))
+  
+  for i in range(cols): # initialize the size of the grid
+    grid.append([0] * rows)
+    opened.append([False] * rows)
+    flaged.append([False] * rows)
+    number.append([Font.render("", True, "white")] * rows)
+  start = True
+  
+def place_bombs(first_x,first_y): # Place bombs on first click
+  global bomb_placed, grid, bomb_count, number, bomb_number, bx,by
+  safe_zone = {(first_x +dx,first_y +dy) # Makes sure the first click is a 0
+            for dx in [-1,0,1]
+            for dy in [ -1,0,1]
+            if 0 <= first_x + dx < cols and 0 <= first_y + dy < rows}     
+  bomb_placed = 0
+  while bomb_placed < bomb_count: # spawn bombs
+      bx = random.randint(0, cols - 1)
+      by = random.randint(0, rows - 1)
+      if grid[bx][by] != "B" and (bx,by) not in safe_zone: # Makes sure bombs dont overlap or not in a 3*3 area from player click
+        bomb_hasPlaced.append([bx,by])
+        grid[bx][by] = "B"
+        bomb_placed += 1
+  for i in range(cols): # check surrounding cells for bombs then properly numbers them
+    for j in range(rows):
+      if grid[i][j] == "B":
+        continue
+      bomb_number = 0
+      for dx in [-1, 0, 1]:
+        for dy in [-1, 0, 1]:
+          ni, nj = i + dx, j + dy
+          if 0 <= ni < cols and 0 <= nj < rows:
+            if grid[ni][nj] == "B":
+              bomb_number += 1
+      grid[i][j] = bomb_number
+      number[i][j] = font.render(str(bomb_number), True, cell_color.get(bomb_number))
+      
+# SCREENS
+def draw_grid(): # Draws Grid 
+  for i in range(cols):
+    for j in range(rows):
+      if not opened[i][j]:
+        if flaged[i][j]:
+          pygame.draw.rect(screen, cell_color.get("flag"), (i * CW + 1, j * CW + 1, CW-1, CW-1))
+        else:
+          pygame.draw.rect(screen, cell_color.get("unopen"), (i * CW + 1, j * CW + 1, CW-1, CW-1))
+      if opened[i][j]:
+        if grid[i][j] == "B":
+          pygame.draw.rect(screen, cell_color.get("bomb"), (i * CW + 1, j * CW + 1, CW-1, CW-1))
+        if grid[i][j] == 0:
+          pygame.draw.rect(screen, cell_color.get("open"), (i * CW + 1, j * CW + 1, CW-1, CW-1))
+          screen.blit(number[i][j], (i * CW + s_w, j * CW + s_h))
+        if grid[i][j] == 1:
+          pygame.draw.rect(screen, cell_color.get("open"), (i * CW + 1, j * CW + 1, CW-1, CW-1))
+          screen.blit(number[i][j], (i * CW + s_w, j * CW + s_h))
+        if grid[i][j] == 2:
+          pygame.draw.rect(screen, cell_color.get("open"), (i * CW + 1, j * CW + 1, CW-1, CW-1))
+          screen.blit(number[i][j], (i * CW + s_w, j * CW + s_h))
+        if grid[i][j] == 3:
+          pygame.draw.rect(screen, cell_color.get("open"), (i * CW + 1, j * CW + 1, CW-1, CW-1))
+          screen.blit(number[i][j], (i * CW + s_w, j * CW + s_h))
+        if grid[i][j] == 4:
+          pygame.draw.rect(screen, cell_color.get("open"), (i * CW + 1, j * CW + 1, CW-1, CW-1))
+          screen.blit(number[i][j], (i * CW + s_w, j * CW + s_h))
+        if grid[i][j] == 5:
+          pygame.draw.rect(screen, cell_color.get("open"), (i * CW + 1, j * CW + 1, CW-1, CW-1))
+          screen.blit(number[i][j], (i * CW + s_w, j * CW + s_h))
+        if grid[i][j] == 6:
+          pygame.draw.rect(screen, cell_color.get("open"), (i * CW + 1, j * CW + 1, CW-1, CW-1))
+          screen.blit(number[i][j], (i * CW + s_w, j * CW + s_h))
+        if grid[i][j] == 7:
+          pygame.draw.rect(screen, cell_color.get("open"), (i * CW + 1, j * CW + 1, CW-1, CW-1))
+          screen.blit(number[i][j], (i * CW + s_w, j * CW + s_h))
+        if grid[i][j] == 8:
+          pygame.draw.rect(screen, cell_color.get("open"), (i * CW + 1, j * CW + 1, CW-1, CW-1))
+          screen.blit(number[i][j], (i * CW + s_w, j * CW + s_h))
+  pygame.display.update()
+  
+def gameover(time_left): # Game Over Screen
+  global dots, countdown_Txt, gameover_Txt
+  screen.fill("Black")
+  screen.blit(gameover_txt,(sW//2 - gameover_txt.get_width()//2, 50))
+  DOTS()
+  screen.blit(countdown_Txt,(90, sH//2+20))
+  pygame.display.update()
+  
+def reveal_bombs(): # show bombs after game over
+  global opened, cell_color,number,CW, grid
+  for i in range(cols):
+    for j in range(rows):
+      if grid[i][j] == "B":
+        opened[i][j] = True
+        
+def Win_Screen(time_left): # Win Screen
+  global dots, countdown_Txt, Win_txt
+  screen.fill("lightblue")
+  DOTS()
+  WON.play()
+  Win_txt = pygame.font.SysFont(None, 36).render(f"You Win!",True,"black")
+  screen.blit(Win_txt,(sW//2 - Win_txt.get_width()//2,50))
+  countdown_Txt = pygame.font.SysFont(None,50).render(f"Restarting in {time_left}{dots}", True, "white")
+  screen.blit(countdown_Txt,(90, sH//2+20))
+  pygame.display.update()
+ 
+  # Animations
+def flashing(): # have a flashing effect when opened bomb
+  global k
+  flashing_timer = 0
+  flash_timelimit = 20
+  while flashing_timer < flash_timelimit:
+    clock.tick(60)
+    flashing_timer += 1
+    if flashing_timer % 2 == 0:
+      screen.fill("white")
+    else:
+      screen.fill("black")
+    pygame.display.update()
+  k = False
+  
+def queue_zero_reveal(x,y): # Appending for 0 spread animation 
+  zero_queue.append((x,y))
+
+def DOTS(): # Dot animation (Loading screen/ Game over screen)
+  global dots,dot_timer,dot_phase, Game_Timer, Loading_Txt,time_left,countdown_Txt
+  clock.tick(60)
+  Game_Timer += 1
+  dot_timer += 1
+  if dot_timer == 20:
+    dot_timer = 0
+    dot_phase = (dot_phase + 1) % 3
+    dots = "." * (dot_phase + 1)
+    countdown_Txt = pygame.font.SysFont(None,50).render(f"Restarting in {time_left}{dots}", True, "white")
+    Loading_Txt = pygame.font.SysFont(None, 50).render(f"LOADING{dots}",True,"White")
+    
+  # GAME CONDITIONS
+def check_win(): # Check if all cells are open for win
+  global open_count
+  open_count = 0
+  for i in range(cols):
+    for j in range(rows):
+      if grid[i][j] != "B" and opened[i][j]:
+        open_count += 1
+  return open_count == (cols*rows) - bomb_placed
+
+def flaged_win(): # Check if all flaged cells are correct
+  global correct_flags, total_flags
+  correct_flags = 0
+  total_flags = 0
+  for i in range(cols):
+    for j in range(rows):
+      if flaged[i][j]:
+        total_flags += 1
+        if grid[i][j] == "B":
+          correct_flags += 1
+  return correct_flags == bomb_count and total_flags == bomb_count
+
+# Game
+#
+#
+while running:
+  for events in pygame.event.get():
+    if events.type == pygame.QUIT:
+      running = False
+      
+  # DEV DEBUG PRINTS
+  if events.type == pygame.KEYDOWN:
+    if events.key == pygame.K_DOWN and dev_cool: # FORCE RESET
+      nums += 1
+      start = False
+      gameOver = False
+      difficulty = "Easy"
+      Game_Timer = 0
+      Game_OverTimer = 0
+      first_click = True
+      dev_cool = False
+      game_cooldown = True
+    if events.key == pygame.K_UP and dev_cool: # SHOW GRID
+      print("\n",f"Grid{nums}:" )
+      for x in range(cols):
+        for y in range(rows):
+          cell = grid[y][x]
+          print(f"{str(cell):>2}", end ="",)
+        print()
+      dev_cool = False
+    if events.key == pygame.K_RIGHT and dev_cool: # SHOW BOOL OPENED, OPEN COUNT, TOTAL SAFE CELLS, TOTAL/PLACED BOMBS, TOTAL/CORRECT FLAGS
+      print("\n", f"Opened{nums}:")
+      for x in range(cols):
+        for y in range(rows):
+          print(f"{opened[y][x]:2}", end ="",)
+        print()
+      op = 0
+      for i in range(cols): # bomb count & open count
+        for j in range(rows):
+          if grid[i][j] != "B" and opened[i][j]:
+            op += 1
+      print("Open count:", op, "\t", "total safe cells",(cols*rows)-bomb_placed)
+      print(f"Correct Flags: {correct_flags}" +"\n"+ f"Total Flags: {total_flags}")
+      print(f"(Bomb Count: {bomb_count}"+"\t"+ f"Bomb Placed: {bomb_placed})")
+      print(f"Bomb originally Placed: {bomb_hasPlaced}")
+      if correct_flags == bomb_placed and total_flags == bomb_placed:
+        print("flag win")
+      dev_cool = False
+    if events.key == pygame.K_LEFT and dev_cool: # SHOW MOUSE COORDS
+      mouse_x, mouse_y = pygame.mouse.get_pos()
+      grid_x = mouse_x // CW
+      grid_y = mouse_y // CW
+      print(f"({grid_x}, {grid_y})")
+      dev_cool = False
+  if events.type == pygame.KEYUP:
+    dev_cool = True
+    
+  if Winning:# Win Screen
+    clock.tick(60)
+    Game_OverTimer -= 1
+    current_time = pygame.time.get_ticks()
+    time_elasped = current_time - game_over_time
+    time_left = max(0,(countdown_durration - time_elasped)//1000)
+    if Game_OverTimer < Game_OverLimit:
+      Win_Screen(time_left)
+      pygame.display.update()
+      if time_elasped >= countdown_durration:
+        k = True
+        start = False
+        gameOver = False
+        nums += 1
+        Winning = False
+        difficulty = "Easy"
+        Game_Timer = 0
+        Game_OverTimer = 0
+        first_click = True
+        game_cooldown = True
+    else:
+      draw_grid()
+      
+  elif gameOver:# Game Over setup
+    clock.tick(60)
+    Game_OverTimer -= 1
+    current_time = pygame.time.get_ticks()
+    time_elasped = current_time - game_over_time
+    time_left = max(0,(countdown_durration - time_elasped)//1000)
+    if Game_OverTimer < Game_OverLimit:
+      gameover(time_left)
+      pygame.display.update()
+      if time_elasped >= countdown_durration:
+        k = True
+        start = False
+        gameOver = False
+        nums += 1
+        Winning = False
+        difficulty = "Easy"
+        Game_Timer = 0
+        Game_OverTimer = 0
+        first_click = True
+        game_cooldown = True
+    else:
+      draw_grid()
+      
+  if not start and not gameOver and not Winning: # Title screen
+    screen.fill("lightgrey")
+    text = Font.render("MINESWEEPER", True, "white")
+    screen.blit(text,(80,50))
+      
+    # Difficulty button
+    diff_rect = pygame.Rect(125,150,150,50)
+    pygame.draw.rect(screen,"grey",diff_rect)
+    diff_text = pygame.font.SysFont(None, 36).render(f"Difficulty: {difficulty}",True,"black")
+    diff_text1 = pygame.font.SysFont(None, 36).render(f"Difficulty",True,"black")
+    screen.blit(diff_text,(110, 100))
+    screen.blit(diff_text1,(diff_rect.x + cols, diff_rect.y + cols))
+    
+    # Start button
+    start_rect = pygame.Rect(125,230,150,50)
+    pygame.draw.rect(screen,"green",start_rect)
+    start_text = pygame.font.SysFont(None, 36).render("Start", True,"black")
+    screen.blit(start_text, (start_rect.x +CW, start_rect.y + cols))
+    
+    if (events.type == pygame.MOUSEBUTTONDOWN and events.button == 1) and button_cooldown: #Diffulcty button
+      mx,my = pygame.mouse.get_pos()
+      if diff_rect.collidepoint(mx,my):
+        difficulty_button.play()
+        current = difficulties.index(difficulty)
+        difficulty = difficulties[(current + 1) % len(difficulties)] # Cycles through the difficulty
+        button_cooldown = False
+      if start_rect.collidepoint(mx,my): # Start button 
+        start_button.play()
+        initialize_game()
+    if events.type == pygame.MOUSEBUTTONUP:
+      button_cooldown = True
+    pygame.display.update()
+        
+  if start and not gameOver and not Winning:
+    if Game_Timer > Game_TimeLimit:
+      # Logic
+      if events.type == pygame.MOUSEBUTTONDOWN and game_cooldown: # controls
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        grid_x = mouse_x // CW
+        grid_y = mouse_y // CW
+        if 0 <= grid_x < cols and 0 <= grid_y < rows:
+          if events.button == 1:  # open cell
+            if first_click:
+              place_bombs(grid_x,grid_y)
+              first_click = False
+            else:  
+              if not flaged[grid_x][grid_y]: # Doesn't open any flaged cells
+                if grid[grid_x][grid_y] == 0: # makes sure the surrounding cells are 0
+                  queue_zero_reveal(grid_x,grid_y)
+                  if check_win(): # check after if it's a win
+                    WON.play()
+                    Game_Timer = 0
+                    gameover_time = pygame.time.get_ticks()
+                    game_over_time = pygame.time.get_ticks()
+                    countdown_durration = 3000
+                    Winning = True
+                    start = False
+                else:
+                  opened[grid_x][grid_y] = True # opens cell normally
+                  if grid[grid_x][grid_y] == "B": # check for a bomb for Game over
+                    print("gameover")
+                    explosion.play()
+                    flashing()
+                    reveal_bombs()
+                    if timer(60) and not k:
+                      Game_Timer = 0
+                      gameOver = True
+                      gameover_time = pygame.time.get_ticks()
+                      game_over_time = pygame.time.get_ticks()
+                      countdown_durration = 5000
+                      game_cooldown = False
+                  # Win Condition
+                  elif (check_win() or flaged_win()) and not first_click:
+                    WON.play()
+                    Game_Timer = 0
+                    gameover_time = pygame.time.get_ticks()
+                    game_over_time = pygame.time.get_ticks()
+                    countdown_durration = 3000
+                    Winning = True
+                    start = False
+                    print("Win")
+
+          if events.button == 3 or events.button == 2 :  # flaged
+            if not opened[grid_x][grid_y] and not cooldown:
+              flaged[grid_x][grid_y] = not flaged[grid_x][grid_y]
+              cooldown = True
+              if flaged_win() and not first_click: # checks if all flaged cells are correct
+                    Winning = True
+                    start = False
+                    print("Win")
+      if events.type == pygame.MOUSEBUTTONUP:
+        cooldown = False    
+        
+      for i in range(cols): # zero spread animation
+        if zero_queue:
+          cx,cy = zero_queue.pop()
+          if not(0<=cx<cols and 0 <= cy < rows):
+            continue
+          if opened[cx][cy] or flaged[cx][cy]:
+            continue
+          opened[cx][cy] = True
+          if grid[cx][cy] == 0:
+            for dx in [-1,0, 1]:
+              for dy in [-1,0,1]:
+                nx,ny = cx +dx, cy + dy
+                if 0 <=nx < cols and 0 <= ny < rows:
+                  zero_queue.append((nx,ny))
+      # Draw
+      screen.fill("Black")
+      clock.tick(60)
+      draw_grid()
+      
+    else: # Loading Screen
+      screen.fill("black")
+      DOTS()
+      clock.tick(60)
+      screen.blit(Loading_Txt,(110, 100))
+      pygame.display.update()
+pygame.quit()
