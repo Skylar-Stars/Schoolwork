@@ -1,0 +1,135 @@
+import pygame
+pygame.init()
+sW = 800
+sH = 600
+scoreP1 = 0
+scoreP2 = 0
+T = 5
+clock = pygame.time.Clock()
+screen = pygame.display.set_mode((sW, sH))
+pygame.display.set_caption("Pong")
+font = pygame.font.SysFont(None, 50)
+img = font.render(str(scoreP1), True, "white")
+img2 = font.render(str(scoreP2), True, "white")
+imgP1 = font.render("COM Won", True, "white")
+imgP2 = font.render("You Won!", True, "white")
+running = True
+# r paddle
+dirR = "Stop"
+xR = 760
+yR = sH/2 - 50
+# l paddle
+dirL = "Stop"
+xL = 10
+yL = sH/2 - 50
+# ball
+xB = 400
+yB = 300
+xSpeed = -2
+ySpeed = -2
+while running:
+# events
+  for events in pygame.event.get():
+    if events.type == pygame.QUIT:
+      running = False
+# Right control
+  if events.type == pygame.KEYDOWN:
+    if events.key == pygame.K_UP:
+      dirR = "Up"
+    if events.key == pygame.K_DOWN:
+      dirR = "Down"
+  if events.type == pygame.KEYUP:
+    if events.key == pygame.K_UP:
+      dirR = "Stop"
+    if events.key == pygame.K_DOWN:
+      dirR = "Stop"
+# Left control
+  if xB < sW/2 - 200:
+    if yB < yL:
+      dirL = "Up"
+    if yB > yL:
+      dirL = "Down"
+    if yB == yL:
+      dirL = "Stop"
+  if xSpeed < 0:
+    dirL = "Stop"
+  if xB > sW:
+    dirL = "Stop"
+# logic
+# Right
+  if dirR == "Up" and yR > 0:
+    yR -= 2
+  if dirR == "Down" and yR < 480:
+    yR += 2
+# Left
+  if dirL == "Up" and yL > 0:
+    yL -= 2
+  if dirL == "Down" and yL < 480:
+    yL += 2
+# moving ball
+  xB += -xSpeed
+  yB += -ySpeed
+# ball bounce
+  if xB < 0 or xB > sW:
+    xSpeed *= -1
+  if yB < 0 or yB > sH - 8:
+    ySpeed *= -1
+# drawing
+  screen.fill("black")
+# Right paddle
+  R = pygame.draw.rect(screen, (255, 255, 255), [xR, yR, 30, 120])
+# Left paddle
+  L = pygame.draw.rect(screen, (255, 255, 255), [xL, yL, 30, 120])
+# Ball
+  B = pygame.draw.rect(screen, (255, 255, 255), [xB, yB, 10, 10])
+  clock.tick(120)
+# collision
+  collisionR = pygame.Rect.colliderect(R, B)
+  collisionL = pygame.Rect.colliderect(L, B)
+  if collisionR:
+    xB -= 5
+    xSpeed *= -1
+  if collisionL:
+    xB -= -5
+    xSpeed *= -1
+# point system
+  if xB > sW - 20:
+    scoreP1 = scoreP1 + 1
+    xB = sW/2
+    yB = sH/2
+    img2 = font.render(str(scoreP1), True, "white")
+    xSpeed = 1
+    xB -= -xSpeed
+    yB -= -ySpeed
+  if xB <= 0:
+    scoreP2 = scoreP2 + 1
+    xB = sW/2
+    yB = sH/2
+    img = font.render(str(scoreP2), True, "white")
+    xSpeed = -1
+    xB -= xSpeed
+    yB -= +ySpeed
+# Winning system
+  if scoreP1 == T:
+    xSpeed = 0
+    ySpeed = 0
+    screen.blit(imgP1, (sW/2 - 50, 300))
+    screen.blit(img2, (sW / 2 - sW, sH - sH - 100))
+    screen.blit(img, (sW / 2 - sW, sH - sH - 100))
+    yB = sH - sH - 100
+    xL = sW - sW - 100
+    xR = sW - sW - 100
+  if scoreP2 == T:
+    xSpeed = 0
+    ySpeed = 0
+    screen.blit(imgP2, (sW/2 - 50, 300))
+    screen.blit(img2, (sW / 2 - sW , sH - sH - 100))
+    screen.blit(img, (sW / 2 - sW, sH - sH - 100))
+    yB = sH - sH - 100
+    xL = sW - sW - 100
+    xR = sW - sW - 100
+  if scoreP1 < T and scoreP2 < T:
+    screen.blit(img, (sW / 2 + 200, 10))
+    screen.blit(img2, (sW / 2 - 200, 10))
+  pygame.display.update()
+pygame.quit()
