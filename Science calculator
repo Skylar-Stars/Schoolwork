@@ -1,0 +1,196 @@
+import math
+def intro_func():
+    global Calculators, Calculator
+    global stime,mtime,htime,dtime,wtime,mntime,ytime,time,distance,ddist,dtime,mass
+    Calculator = None
+    mass = None
+    dtime = None
+    ddist = None
+    distance = []
+    time = []
+    print("\n" + "Welcome to the science Calculator!")
+    print("\n" + "- Delta-V (Dv)" + "\n" + "- Juels(Watts)" + "\n" + "- Newtons" + "\n" + "Or Exit" + "\n" )
+    Calculators = ["Dv", "Juels","Newtons","Exit"]
+    while True:
+        try:
+            Calculator = input("Which Calculator would you like to use?" + "\n" + "- ")
+            Calculator = Calculator.capitalize()
+            if Calculator == Calculators[0]:
+                return "Dv"
+            elif Calculator == Calculators[1]:
+                return "Juels"
+            elif Calculator == Calculators[2]:
+                return "Newtons"
+            elif Calculator == Calculators[3]:
+                print("CYA!")
+                exit()
+        except NameError:
+            print("I didn't get that..." + "\n" + "Try again")
+        except Exception as e:
+            print(f"An unexpected error has occured: {e}")
+        
+def delta_t():
+    global stime,mtime,htime,dtime,wtime,mntime,ytime
+    dtime = 0
+    wtime = 0
+    mntime = 0
+    ytime = 0
+    print("\n" + "- Time" + "\n")
+    while True:
+        try:
+            htime = float(input("Enter the duration in hours: "))
+            if htime < 0:
+               print("Enter a positive number")
+            mtime = float(input("Enter the duration in minutes: "))
+            if mtime < 0:
+                print("Enter a positive number")
+            stime = float(input("Enter the remaining duration in seconds: "))
+            if stime < 0:
+                print("Enter a positive number")
+            total_seconds = stime + (mtime * 60) + (htime *36000)   
+            if stime >= 60: # seconds to minutes
+                mtime = mtime + stime // 60
+                stime = stime % 60
+            if mtime >= 60: # minutes to hours
+                htime = htime + mtime // 60
+                mtime = mtime % 60
+            
+            backup = [stime,mtime,htime]
+            backupS = total_seconds
+            backupH = backup[2]
+            if htime >= 24: # hours to days
+                dtime = htime // 24
+                htime = htime % 24
+                
+                if dtime >= 7: # days to weeks
+                    wtime = dtime//7
+                    dtime = dtime % 7
+                if wtime >=4: # weeks to months
+                    mntime = wtime // 4
+                    wtime = wtime % 4
+                if mntime >= 12: # months to years
+                    ytime = mntime // 12
+                    mntime = mntime % 12
+                    
+            if htime >= 0 or mtime >= 0 or stime >= 0:
+                time = [ytime, mntime, wtime, dtime, htime, mtime, stime, backupH, backupS]
+                return time
+        except ValueError:
+            print("Please enter a number")
+        except Exception as e:
+            print(f"An unexpected error has occured: {e}")
+
+def delta_d():
+    global meters, km, distance
+    print("\n" + "- Distance" + "\n")
+    while True:
+        try:
+            km = int(input("Enter the distance as Kilometer in whole numbers: "))
+            meters = int(input("\n" + "Enter the distance as meters in whole numbers: "))
+            total_meters = (km * 1000) + meters
+            if meters >= 1000:
+                km = km + meters // 1000
+                meters = meters % 1000
+            if meters < 0 or km < 0:
+                print("Enter a positive number")
+            else:
+                distance = [km, meters, total_meters]
+                return distance
+        except ValueError:
+            print("Enter a number")
+
+def mass_func():
+    print("\n" + "- Mass" + "\n")
+    while True:
+        try:
+            kMass = float(input("Enter the mass in kg: "))
+            gMass = float(input("Enter the remaining mass in grams: "))
+            total_M = (kMass * 1000) + gMass
+            if kMass < 0 or gMass < 0:
+                print("Enter a positive number!")
+            if gMass >= 1000:
+                kMass = kMass + (gMass/1000)
+                gMass = gMass % 1000
+            if kMass > 0 or gMass > 0:
+                total_Mass = [round(kMass,2), round(gMass,2), total_M]
+                return total_Mass
+        
+        except ValueError:
+            print("Enter a number" + "\n" + "Restart again" + "\n")
+
+def Print_func(dtime,ddist,mass):
+    formated_time_sec = f"{dtime[-1]:,}"
+    formated_dist_kM = f"{ddist[0]:,}"
+    formated_dist_M = f"{ddist[1]:,}"
+    formated_dist_tM = f"{ddist[2]:,}"
+    if mass is None:
+        pass
+    else:
+        formated_mass_tM = f"{mass[2]:,}"
+        formated_mass_kM = f"{mass[0]:,}"
+        formated_mass_M = f"{mass[1]:,}"
+        print("- Mass:")
+        print(f"{formated_mass_kM}km" + "\n" + f"{formated_mass_M}m" + "\n" + f"Total meters: {formated_mass_tM}m")
+
+    print("\n" + "- The time that elasped:")
+    if dtime[0] > 0:
+        print(f"{dtime[0]} Years")
+    if dtime[1] > 0:
+        print(f"{dtime[1]} Months")
+    if dtime[2] > 0:
+        print(f"{dtime[2]} Weeks")
+    print(f"{dtime[4]} Hours" + "\n" + f"{dtime[5]} Minutes" + "\n" + f"{dtime[6]} Seconds")
+    
+    print(f"The total Seconds is {formated_time_sec}")
+    print("\n" + "Distance Traveled:")
+    print(f"The distance is {formated_dist_kM}Km and {formated_dist_M}m")
+    print(f"The Total meters is {formated_dist_tM}")
+    
+    if Calculator == Calculators[0]: # Delta V
+        delta_V = ddist[2]/dtime[-1]
+        delta_V = round(delta_V,3)
+        foramated_DV = f"{delta_V:,}"
+        print("\n" + "So the delta-V is " + str(foramated_DV) + "m/s" )
+    
+    elif Calculator == Calculators[1]: # Juels
+        print()
+        delta_V = ddist[2]/dtime[-1]
+        delta_V = round(delta_V,2)
+        Juels = delta_V * ddist[2]
+        formated_J = f"{Juels:,}"
+        print("\n" + f"The watts is {formated_J} w" + "\n" + f"The Juels is {formated_J} J/s")
+    
+    elif Calculator == Calculators[2]: # Newtons
+        acceleration = (ddist[2]/dtime[-1])**2
+        if acceleration <= 1:
+            pass
+        else:
+            acceleration = round(acceleration,2)
+        print("\n" + f"Acceleration is {acceleration} m/s^2")
+        Newtons = mass[1] * acceleration
+        if Newtons <= 1:
+            pass
+        else:
+            Newtons = round(Newtons,2)
+        formated_N = f"{Newtons:,}"
+        print("\n" + f"The Newtons is {formated_N} ")
+    main()
+        
+def main():
+    intro = intro_func()
+    if intro == Calculators[0]: # Delta-V
+        dtime = delta_t()
+        ddist = delta_d()
+        Print_func(dtime,ddist, None)
+    elif intro == Calculators[1]: # Juels
+        mass = mass_func()  
+        dtime = delta_t()
+        ddist = delta_d()
+        Print_func(dtime,ddist,mass)
+    elif intro == Calculators[2]: # Newtons
+        mass = mass_func()  
+        dtime = delta_t()
+        ddist = delta_d()
+        Print_func(dtime,ddist,mass)
+
+main()
