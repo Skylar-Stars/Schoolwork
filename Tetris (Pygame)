@@ -1,0 +1,1140 @@
+import pygame
+import random
+import time
+
+
+pygame.init()
+
+
+# defining the Base logic
+sW = 400
+sH = 620
+screen = pygame.display.set_mode((sW, sH))
+running = True
+clock = pygame.time.Clock()
+falling = False
+start = True
+cooldown = False
+points = 0
+color = []
+Left = True
+Right = True
+count = 0
+pause = False
+freeze = False
+gameTime = 10
+lock_timer = 0
+lock_delay = 8
+gameover = False
+hold = 0
+holding = False
+holdCooldown = False
+once = False
+cool = False
+# Texts
+font = pygame.font.SysFont(None, 50)
+title_text = font.render("Tetris", True, "white")
+instructions = font.render("Press ENTER to Start", True, "white")
+score = font.render("Score: " + str(points), True, "white")
+gameOver_Txt = font.render("Game Over", True, "White")
+gameOver_score = font.render("Your Score Was: " + str(points), True, "white")
+gameOver_instructions = font.render("Press ENTER to Start", True, "white")
+
+# functions
+frames = 10
+num1 = 0
+# getting and adding color to grid
+def get_color():
+  global color_tet, color_P, color_H, hold, preview, tet_ran
+  # Player color
+  if tet_ran > 0:
+    if tet_ran == 1 :
+      color_tet = "cyan"
+    elif tet_ran == 2:
+      color_tet = "purple"
+    elif tet_ran == 3:
+      color_tet = "blue"
+    elif tet_ran == 4:
+      color_tet = "orange"
+    elif tet_ran == 5:
+      color_tet = "red"
+    elif tet_ran == 6 :
+      color_tet = "green"
+    elif tet_ran == 7:
+      color_tet = "yellow"
+  # Preview color
+  if preview > 0:
+    if preview == 1:
+      color_P = "cyan"
+    elif preview == 2:
+      color_P = "purple"
+    elif preview == 3:
+      color_P = "blue"
+    elif preview == 4:
+      color_P = "orange"
+    elif preview == 5:
+      color_P = "red"
+    elif preview == 6:
+      color_P = "green"
+    elif preview == 7:
+      color_P = "yellow"
+  # Hold color
+  if hold == 0:
+    color_H = "black"
+    return color_H
+  elif hold == 1:
+    color_H = "cyan"
+    return color_H
+  elif hold == 2:
+    color_H = "purple"
+    return color_H
+  elif hold == 3:
+    color_H = "blue"
+    return color_H
+  elif hold == 4:
+    color_H = "orange"
+    return color_H
+  elif hold == 5:
+    color_H = "red"
+    return color_H
+  elif hold == 6:
+    color_H = "green"
+    return color_H
+  elif hold == 7:
+    color_H = "yellow"
+    return color_H
+
+# Hold block feature
+def hold_function():
+  global holding, hold, tet_ran,preview,px,px1,px2,px3,py,py1,py2,py3,hx,hx1,hx2,hx3,hy,hy1,hy2,hy3, tempX, tempX1, tempX2, tempX3, tempY3, tempY1, tempY, temp
+  if not holding:
+    hold = tet_ran
+    tet_ran = preview
+    preview = random.randint(1, 7)
+    holding = True
+    
+    shape()
+    grid[tempX][tempY] = 0
+    grid[tempX1][tempY1] = 0
+    grid[tempX2][tempY2] = 0
+    grid[tempX3][tempY3] = 0 
+    
+    grid[px][py] = 0
+    grid[px1][py1] = 0
+    grid[px2][py2] = 0
+    grid[px3][py3] = 0
+    p_block = p_shape()
+    px, py = p_block[0]
+    px1, py1 = p_block[1]
+    px2, py2 = p_block[2]
+    px3, py3 = p_block[3]
+    P_List[0] = [px, py]
+    P_List[1] = [px1, py1]
+    P_List[2] = [px2, py2]
+    P_List[3] = [px3, py3]
+    
+    grid[hx][hy] = 0
+    grid[hx1][hy1] = 0
+    grid[hx2][hy2] = 0
+    grid[hx3][hy3] = 0
+    h_block = hold_shape()
+    hx, hy = h_block[0]
+    hx1, hy1 = h_block[1]
+    hx2, hy2 = h_block[2]
+    hx3, hy3 = h_block[3]
+    h_List[0] = [hx, hy]
+    h_List[1] = [hx1, hy1]
+    h_List[2] = [hx2, hy2]
+    h_List[3] = [hx3, hy3]
+
+  elif holding:
+    temp = tet_ran
+    tet_ran = hold
+    hold = temp
+    
+    shape()
+
+    grid[tempX][tempY] = 0
+    grid[tempX1][tempY1] = 0
+    grid[tempX2][tempX2] = 0
+    grid[tempX3][tempX3] = 0
+    grid[hx][hy] = 0
+    grid[hx1][hy1] = 0
+    grid[hx2][hy2] = 0
+    grid[hx3][hy3] = 0
+    h_block = hold_shape()
+    hx, hy = h_block[0]
+    hx1, hy1 = h_block[1]
+    hx2, hy2 = h_block[2]
+    hx3, hy3 = h_block[3]
+    h_List[0] = [hx, hy]
+    h_List[1] = [hx1, hy1]
+    h_List[2] = [hx2, hy2]
+    h_List[3] = [hx3, hy3]
+
+# Game Over
+def GameOver():
+  global start, points
+  start = False
+  screen.fill("black")
+  gameOver_score = font.render("Your Score Was: " + str(points), True, "white")
+  screen.blit(gameOver_Txt, (sW // 2 - gameOver_Txt.get_width() // 2, 40))
+  screen.blit(gameOver_score, (sW // 2 - gameOver_score.get_width() // 2, 80))
+  screen.blit(gameOver_instructions, (sW // 2 - gameOver_instructions.get_width() // 2, 120))
+  pygame.display.update()
+
+def save_blocks():
+  global tet_ran, s_List, Dir, flip, preview, grid, px, px1, px2, px3, py, py1, py2, py3, P_List, points, yDir, score, lock_timer, once
+  once = False
+  C = tet_ran
+  s_List.append([tempX, tempY, C])
+  s_List.append([tempX1, tempY1, C])
+  s_List.append([tempX2, tempY2, C])
+  s_List.append([tempX3, tempY3, C])
+  Dir = "STOP"
+  # resets the value of player
+  flip = 0
+  tet_ran = preview
+  preview = random.randint(1, 7)
+  grid[px][py] = 0
+  grid[px1][py1] = 0
+  grid[px2][py2] = 0
+  grid[px3][py3] = 0
+  yDir = Fall(yDir)
+  p_block = p_shape()
+  px, py = p_block[0]
+  px1, py1 = p_block[1]
+  px2, py2 = p_block[2]
+  px3, py3 = p_block[3]
+  cool = False
+  P_List[0] = [px, py]
+  P_List[1] = [px1, py1]
+  P_List[2] = [px2, py2]
+  P_List[3] = [px3, py3]
+  shape()
+  points += 10
+  score = font.render("Score: " + str(points), True, "white")
+  lock_timer = 0
+
+# Clearing lines
+def clear_lines():
+  global s_List, count, points, num1
+  full_rows = []
+  num = 0
+  for y in range(30):
+    count = 0
+    for x in range(20):
+      if grid[x][y] != 0:
+        count += 1
+    if count == 20:
+      full_rows.append(y)
+      num += 1
+      num1 += 1
+      if num == 4:
+        points += 500
+      else:
+        points += 100
+      score = font.render("Score: " + str(points), True, "white")
+      for row in full_rows:
+        s_List = [block for block in s_List if block[1] != row]
+        for block in s_List:
+          if block[1] < row:
+            block[1] += 1
+    for i in range(20):
+      for j in range(30):
+        grid[i][j] = 0
+        color_grid[i][j] = (0, 0, 0)
+    for i in range(len(s_List)):
+      x = s_List[i][0]
+      y = s_List[i][1]
+      grid[x][y] = 2
+      color_grid[x][y] = SaveColor(s_List[i][2])
+  pygame.display.update()
+
+def ground(s_List, tempX, tempY, tempX1, tempY1, tempX2, tempY2, tempX3, tempY3):
+  for i in range(len(s_List)):
+    x, y = s_List[i][0], s_List[i][1]
+    if (tempY + 1 == y or tempY1 + 1 == y or tempY2 + 1 == y or tempY3 + 1 == y) and (
+      tempX == x or tempX1 == x or tempX2 == x or tempX3 == x):
+      return True
+  for x1, y1 in [(tempX, tempY), (tempX1, tempY1), (tempX2, tempY2), (tempX3, tempY3)]:
+    if y1 + 1 >= len(grid[0]) or grid[x1][y1 + 1] == 0:
+      return False
+    elif y1 + 1 >= len(grid[0]) or grid[x1][y1 + 1] != 0:
+      return False
+  return False
+
+def is_colliding():
+  for x, y in [(tempX, tempY), (tempX1, tempY1), (tempX2, tempY2), (tempX3, tempY3)]:
+    if y + 1 >= len(grid[0]) or grid[x][y + 1] != 0:
+      return True
+  return False
+
+# Check collision for wall
+def check_wall_collision(B_List, s_List, tempX, tempX1, tempX2, tempX3):
+  Left = True
+  Right = True
+  for x, y in B_List:
+    if x <= 0 or [x - 1, y] in s_List:
+      Left = False
+    if x >= 19 or [x + 1, y] in s_List:
+      Right = False
+  return Left, Right
+
+# Check collision with saved blocks
+def check_collision_with_saved(temp_coords, grid):
+  for x, y in temp_coords:
+    if x < 0 or x >= len(grid) or y < 0 or y >= len(grid[0]):
+      return True
+    if grid[x][y] == 2:
+      return True
+  return False
+
+# Check collision for next rotation
+def check_collision(temp_coords, grid):
+  for x, y in temp_coords:
+    if x < 0 or x >= len(grid) or y >= len(grid[0]) or grid[x][y] == 2:
+      return True
+  return False
+  
+# Check collision for next rotation
+def check_collisions(temp_blocks, grid):
+  for x, y in temp_blocks:
+    if x < 0 or x >= len(grid) or y >= len(grid[0]) or grid[x][y] == 2:
+      return True
+  return False
+
+# Flip through rotation phases
+def rotation(flip):
+  flip += 1
+  if flip > 3:
+    return 0
+  return flip
+  
+# Falling
+def Fall(yDir):
+  if yDir == 0:
+    return 1
+
+# save color for saved block
+def SaveColor(t):
+  if t == 1:
+    return "cyan"  # Cyan
+  elif t == 2:
+    return "purple"  # purple
+  elif t == 3:
+    return "blue"  # blue
+  elif t == 4:
+    return "orange"  # orange
+  elif t == 5:
+    return "red"  # red
+  elif t == 6:
+    return "green"  # green
+  elif t == 7:
+    return "yellow"  # yellow
+
+# Get pos for player start block
+def shape():
+  global B_List, tet_ran
+  # I
+  if tet_ran == 1:
+  # 0
+    B_List[0][0] = 10
+    B_List[0][1] = 0
+    B_List[1][0] = 10
+    B_List[1][1] = 1
+    B_List[2][0] = 10
+    B_List[2][1] = 2
+    B_List[3][0] = 10
+    B_List[3][1] = 3
+  # T
+  elif tet_ran == 2:
+  # 0
+    B_List[0][0] = 10
+    B_List[0][1] = 0
+    B_List[1][0] = 9
+    B_List[1][1] = 1
+    B_List[2][0] = 10
+    B_List[2][1] = 1
+    B_List[3][0] = 11
+    B_List[3][1] = 1
+  # L
+  elif tet_ran == 3:
+  # 0
+    B_List[0][0] = 10
+    B_List[0][1] = 0
+    B_List[1][0] = 10
+    B_List[1][1] = 1
+    B_List[2][0] = 10
+    B_List[2][1] = 2
+    B_List[3][0] = 11
+    B_List[3][1] = 2
+  # J
+  elif tet_ran == 4:
+  # 0
+    B_List[0][0] = 10
+    B_List[0][1] = 0
+    B_List[1][0] = 10
+    B_List[1][1] = 1
+    B_List[2][0] = 10
+    B_List[2][1] = 2
+    B_List[3][0] = 9
+    B_List[3][1] = 2
+  # S
+  elif tet_ran == 5:
+    B_List[0][0] = 10
+    B_List[0][1] = 0
+    B_List[1][0] = 9
+    B_List[1][1] = 0
+    B_List[2][0] = 9
+    B_List[2][1] = 1
+    B_List[3][0] = 8
+    B_List[3][1] = 1
+  # Z
+  elif tet_ran == 6:
+    B_List[0][0] = 9
+    B_List[0][1] = 0
+    B_List[1][0] = 10
+    B_List[1][1] = 0
+    B_List[2][0] = 10
+    B_List[2][1] = 1
+    B_List[3][0] = 11
+    B_List[3][1] = 1
+  # O
+  elif tet_ran == 7:
+    B_List[0][0] = 10
+    B_List[0][1] = 0
+    B_List[1][0] = 11
+    B_List[1][1] = 0
+    B_List[2][0] = 10
+    B_List[2][1] = 1
+    B_List[3][0] = 11
+    B_List[3][1] = 1
+  return tempX, tempY, tempX1, tempY1, tempX2, tempY2, tempX3, tempY3
+
+def hold_shape():
+  global h_List, hold
+  # I
+  if hold == 1:
+  # 0
+    h_List[0][0] = 15
+    h_List[0][1] = 1
+    h_List[1][0] = 16
+    h_List[1][1] = 1
+    h_List[2][0] = 17
+    h_List[2][1] = 1
+    h_List[3][0] = 18
+    h_List[3][1] = 1
+  # T
+  elif hold == 2:
+  # 0
+    h_List[0][0] = 17
+    h_List[0][1] = 1
+    h_List[1][0] = 17
+    h_List[1][1] = 2
+    h_List[2][0] = 16
+    h_List[2][1] = 2
+    h_List[3][0] = 18
+    h_List[3][1] = 2
+  # L
+  elif hold == 3:
+  # 0
+    h_List[0][0] = 16
+    h_List[0][1] = 2
+    h_List[1][0] = 17
+    h_List[1][1] = 2
+    h_List[2][0] = 18
+    h_List[2][1] = 2
+    h_List[3][0] = 18
+    h_List[3][1] = 1
+  # J
+  elif hold == 4:
+  # 0
+    h_List[0][0] = 16
+    h_List[0][1] = 2
+    h_List[1][0] = 17
+    h_List[1][1] = 2
+    h_List[2][0] = 18
+    h_List[2][1] = 2
+    h_List[3][0] = 16
+    h_List[3][1] = 1
+  # S
+  elif hold == 5:
+    h_List[0][0] = 18
+    h_List[0][1] = 1
+    h_List[1][0] = 17
+    h_List[1][1] = 1
+    h_List[2][0] = 17
+    h_List[2][1] = 2
+    h_List[3][0] = 16
+    h_List[3][1] = 2
+  # Z
+  elif hold == 6:
+    h_List[0][0] = 16
+    h_List[0][1] = 1
+    h_List[1][0] = 17
+    h_List[1][1] = 1
+    h_List[2][0] = 17
+    h_List[2][1] = 2
+    h_List[3][0] = 18
+    h_List[3][1] = 2
+  # O
+  elif hold == 7:
+    h_List[0][0] = 17
+    h_List[0][1] = 1
+    h_List[1][0] = 18
+    h_List[1][1] = 1
+    h_List[2][0] = 17
+    h_List[2][1] = 2
+    h_List[3][0] = 18
+    h_List[3][1] = 2
+  hx, hy = h_List[0]
+  hx1, hy1 = h_List[1]
+  hx2, hy2 = h_List[2]
+  hx3, hy3 = h_List[3]
+  return [(hx, hy), (hx1, hy1), (hx2, hy2), (hx3, hy3)]
+
+# Preveiw Coords
+def p_shape():
+  if preview == 1:
+    px = 1
+    py = 2
+    px1 = 2
+    py1 = 2
+    px2 = 3
+    py2 = 2
+    px3 = 4
+    py3 = 2
+  # T
+  elif preview == 2:
+    px = 1
+    py = 2
+    px1 = 2
+    py1 = 2
+    px2 = 2
+    py2 = 1
+    px3 = 3
+    py3 = 2
+  # L
+  elif preview == 3:
+    px = 1
+    py = 2
+    px1 = 2
+    py1 = 2
+    px2 = 3
+    py2 = 2
+    px3 = 3
+    py3 = 1
+  # J
+  elif preview == 4:
+    px = 1
+    py = 2
+    px1 = 2
+    py1 = 2
+    px2 = 3
+    py2 = 2
+    px3 = 1
+    py3 = 1
+  # S
+  elif preview == 5:
+    px = 1
+    py = 2
+    px1 = 2
+    py1 = 2
+    px2 = 2
+    py2 = 1
+    px3 = 3
+    py3 = 1
+  # Z
+  elif preview == 6:
+    px = 1
+    py = 1
+    px1 = 2
+    py1 = 1
+    px2 = 2
+    py2 = 2
+    px3 = 3
+    py3 = 2
+  # O
+  elif preview == 7:
+    px = 1
+    py = 2
+    px1 = 2
+    py1 = 2
+    px2 = 1
+    py2 = 1
+    px3 = 2
+    py3 = 1
+  return [(px, py), (px1, py1), (px2, py2), (px3, py3)]
+
+# Get rotated coords
+def get_rotated_shape(tet_ran, flip, tempX, tempY, tempX1, tempY1, tempX2, tempY2, tempX3, tempY3):
+  center_x, center_y = B_List[1]
+  if tet_ran == 1:
+    if flip == 0 or flip == 2:
+      tempX, tempY = center_x, center_y - 1
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x, center_y + 1
+      tempX3, tempY3 = center_x, center_y + 2
+    else:
+      tempX, tempY = center_x - 1, center_y
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x + 1, center_y
+      tempX3, tempY3 = center_x + 2, center_y
+  
+  
+  if tet_ran == 2:
+    if flip == 0:
+      tempX, tempY = center_x - 1, center_y + 1
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x, center_y + 1
+      tempX3, tempY3 = center_x + 1, center_y + 1
+    elif flip == 1:
+      tempX, tempY = center_x, center_y - 1
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x + 1, center_y
+      tempX3, tempY3 = center_x, center_y + 1
+    elif flip == 2:
+      tempX, tempY = center_x - 1, center_y
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x, center_y + 1
+      tempX3, tempY3 = center_x + 1, center_y
+    elif flip == 3:
+      tempX, tempY = center_x, center_y - 1
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x - 1, center_y
+      tempX3, tempY3 = center_x, center_y + 1
+  
+  elif tet_ran == 3:
+    if flip == 0:
+      tempX, tempY = center_x, center_y - 1
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x, center_y + 1
+      tempX3, tempY3 = center_x + 1, center_y + 1
+    elif flip == 1:
+      tempX, tempY = center_x - 1, center_y
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x + 1, center_y
+      tempX3, tempY3 = center_x - 1, center_y + 1
+    elif flip == 2:
+      tempX, tempY = center_x, center_y + 1
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x, center_y - 1
+      tempX3, tempY3 = center_x - 1, center_y - 1
+    elif flip == 3:
+      tempX, tempY = center_x - 1, center_y
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x + 1, center_y
+      tempX3, tempY3 = center_x + 1, center_y - 1
+  
+  elif tet_ran == 4:
+    if flip == 0:
+      tempX, tempY = center_x, center_y - 1
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x, center_y + 1
+      tempX3, tempY3 = center_x - 1, center_y + 1
+    elif flip == 1:
+      tempX, tempY = center_x - 1, center_y
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x + 1, center_y
+      tempX3, tempY3 = center_x - 1, center_y - 1
+    elif flip == 2:
+      tempX, tempY = center_x, center_y + 1
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x, center_y - 1
+      tempX3, tempY3 = center_x + 1, center_y - 1
+    elif flip == 3:
+      tempX, tempY = center_x + 1, center_y
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x - 1, center_y
+      tempX3, tempY3 = center_x + 1, center_y + 1
+  
+  elif tet_ran == 5:
+    if flip == 0 or flip == 2:
+      tempX, tempY = center_x + 1, center_y
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x, center_y + 1
+      tempX3, tempY3 = center_x - 1, center_y + 1
+    elif flip == 1 or flip == 3:
+      tempX, tempY = center_x, center_y + 1
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x - 1, center_y
+      tempX3, tempY3 = center_x - 1, center_y - 1
+  
+  elif tet_ran == 6:
+    if flip == 0 or flip == 2:
+      tempX, tempY = center_x - 1, center_y
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x, center_y + 1
+      tempX3, tempY3 = center_x + 1, center_y + 1
+    else:
+      tempX, tempY = center_x, center_y + 1
+      tempX1, tempY1 = center_x, center_y
+      tempX2, tempY2 = center_x + 1, center_y
+      tempX3, tempY3 = center_x + 1, center_y - 1
+      
+  elif tet_ran == 7:
+    tempX, tempY = center_x - 1, center_y
+    tempX1, tempY1 = center_x, center_y
+    tempX2, tempY2 = center_x - 1, center_y + 1
+    tempX3, tempY3 = center_x, center_y + 1
+  
+  return [(tempX, tempY), (tempX1, tempY1), (tempX2, tempY2), (tempX3, tempY3)]
+
+# Unused color dictionary
+color_dict = {
+1: (0, 255, 255),  # cyan
+2: (160, 32, 240),  # Purple
+3: (0, 0, 255),  # Blue
+4: (255, 165, 0),  # Orange
+5: (255, 0, 0),  # Red
+6: (0, 255, 0),  # Green
+7: (255, 255, 0)  # Yellow
+}
+# Unused Rotation dictionary
+rotaion_offsets = {
+1: [
+[(0, 0), (-1, 1), (1, -1), (2, -2)],
+[(0, 0), (1, -1), (-1, 1), (-2, 2)],
+[(0, 0), (-1, 1), (1, -1), (2, -2)],
+[(0, 0), (1, -1), (-1, 1), (-2, 2)],
+],
+
+2: [
+[(0, 0), (-1, 1), (1, 1), (0, -1)],
+[(0, 0), (1, 1), (1, -1), (-1, 0)],
+[(0, 0), (1, -1), (-1, -1), (0, 1)],
+[(0, 0), (-1, -1), (-1, 1), (1, 0)]
+],
+
+3: [
+[(0, 0), (-1, 1), (1, -1), (2, 0)],
+[(0, 0), (1, 1), (-1, -1), (0, -2)],
+[(0, 0), (1, -1), (-1, 1), (-2, 0)],
+[(0, 0), (-1, -1), (1, 1), (0, -1)]
+],
+
+4: [
+[(0, 0), (-1, 1), (1, -1), (0, -2)],
+[(0, 0), (1, 1), (-1, -1), (2, 0)],
+[(0, 0), (1, -1), (-1, 1), (0, 2)],
+[(0, 0), (-1, -1), (1, 1), (-2, 0)]
+],
+
+5: [
+[(0, 0), (1, 1), (0, -1), (-1, 0)],
+[(0, 0), (-1, 1), (1, 0), (0, -1)],
+[(0, 0), (1, 1), (0, -1), (-1, 0)],
+[(0, 0), (-1, 1), (1, 0), (0, -1)]
+],
+
+6: [
+[(0, 0), (-1, 1), (0, -1), (-1, 0)],
+[(0, 0), (1, 1), (-1, 0), (0, -1)],
+[(0, 0), (-1, 1), (0, -1), (-1, 0)],
+[(0, 0), (1, 1), (-1, 0), (0, -1)]
+],
+
+7: [
+[(0, 0), (0, 0), (0, 0), (0, 0)],
+[(0, 0), (0, 0), (0, 0), (0, 0)],
+[(0, 0), (0, 0), (0, 0), (0, 0)],
+[(0, 0), (0, 0), (0, 0), (0, 0)]
+]
+}
+
+# Blocks
+preview = random.randint(1, 7)
+tet_ran = random.randint(1, 7)
+One = True
+Dir = "STOP"
+xDir = 0
+yDir = 1
+flip = 0
+
+P_List = []
+B_List = []
+h_List = []
+h_List.append([0, 0])
+h_List.append([0, 0])
+h_List.append([0, 0])
+h_List.append([0, 0])
+
+
+if preview == 1:
+  P_List.append([1, 2])
+  P_List.append([2, 2])
+  P_List.append([3, 2])
+  P_List.append([4, 2])
+if preview == 2:
+  P_List.append([1, 2])
+  P_List.append([2, 2])
+  P_List.append([2, 1])
+  P_List.append([3, 2])
+if preview == 3:
+  P_List.append([1, 2])
+  P_List.append([2, 2])
+  P_List.append([3, 2])
+  P_List.append([3, 1])
+if preview == 4:
+  P_List.append([1, 2])
+  P_List.append([2, 2])
+  P_List.append([3, 2])
+  P_List.append([1, 1])
+if preview == 5:
+  P_List.append([1, 2])
+  P_List.append([2, 2])
+  P_List.append([2, 1])
+  P_List.append([3, 1])
+if preview == 6:
+  P_List.append([1, 1])
+  P_List.append([2, 1])
+  P_List.append([2, 2])
+  P_List.append([3, 2])
+if preview == 7:
+  P_List.append([1, 2])
+  P_List.append([2, 2])
+  P_List.append([1, 1])
+  P_List.append([2, 1])
+# I
+if tet_ran == 1:
+  B_List.append([10, 0])
+  B_List.append([10, 1])
+  B_List.append([10, 2])
+  B_List.append([10, 3])
+# T
+if tet_ran == 2:
+  B_List.append([10, 0])
+  B_List.append([10, 1])
+  B_List.append([9, 1])
+  B_List.append([11, 1])
+# L
+if tet_ran == 3:
+  B_List.append([10, 0])
+  B_List.append([10, 1])
+  B_List.append([10, 2])
+  B_List.append([11, 2])
+# J
+if tet_ran == 4:
+  B_List.append([10, 0])
+  B_List.append([10, 1])
+  B_List.append([10, 2])
+  B_List.append([9, 2])
+# S
+if tet_ran == 5:
+  B_List.append([10, 0])
+  B_List.append([9, 0])
+  B_List.append([9, 1])
+  B_List.append([8, 1])
+# Z
+if tet_ran == 6:
+  B_List.append([9, 0])
+  B_List.append([10, 0])
+  B_List.append([10, 1])
+  B_List.append([11, 1])
+# O
+if tet_ran == 7:
+  B_List.append([10, 0])
+  B_List.append([11, 0])
+  B_List.append([10, 1])
+  B_List.append([11, 1])
+# Saved Blocks
+s_List = []
+# Board
+color_grid = []
+grid = []
+for i in range(20):
+  grid.append([0] * 30)
+  color_grid.append([(0, 0, 0)] * 30)
+  
+while running:
+  for event in pygame.event.get():
+    if event.type == pygame.QUIT:
+      running = False
+
+# Title screen
+  if not start and not pause and not gameover:
+    screen.fill("black")
+    
+    def StartScreen():
+      screen.blit(title_text, (sW / 2 - title_text.get_width() // 2, 20))
+      screen.blit(instructions, (sW / 2 - instructions.get_width() // 2, 60))
+    
+    if event.type == pygame.KEYDOWN:
+      if event.key == pygame.K_RETURN:
+        start = True
+    StartScreen()
+    pygame.display.update()
+  
+  if pause and not start and not gameover:
+    screen.fill("Black")
+    screen.blit(instructions, (sW / 2 - instructions.get_width() // 2, 60))
+    if event.type == pygame.KEYDOWN:
+      if event.key == pygame.K_RETURN:
+        start = True
+        pause = False
+        freeze = True
+    pygame.display.update()
+  
+  if gameover and not start:
+    if event.type == pygame.KEYDOWN:
+      if event.key == pygame.K_RETURN:
+        points = 0
+        start = True
+        gameover = False
+        color_grid = []
+        grid = []
+        for i in range(20):
+          grid.append([0] * 30)
+          color_grid.append([(0, 0, 0)] * 30)
+        preview = random.randint(1, 7)
+        tet_ran = random.randint(1, 7)
+    GameOver()
+  if start:
+    count = 0
+    # Controls
+    if event.type == pygame.KEYDOWN:
+      if event.key == pygame.K_UP and not cooldown:
+        flip = rotation(flip)
+        temp_blocks = get_rotated_shape(tet_ran, flip, tempX, tempY, tempX1, tempY1, tempX2, tempY2, tempX3,tempY3)
+        if not check_collisions(temp_blocks, grid):
+          lock_timer = 0
+          tempX, tempY = temp_blocks[0]
+          tempX1, tempY1 = temp_blocks[1]
+          tempX2, tempY2 = temp_blocks[2]
+          tempX3, tempY3 = temp_blocks[3]
+          for block in B_List:
+            x, y = block[0], block[1]
+            if 0 <= x < 20 and 0 <= y < 30:
+              grid[x][y] = 0
+          B_List[0] = [tempX, tempY]
+          B_List[1] = [tempX1, tempY1]
+          B_List[2] = [tempX2, tempY2]
+          B_List[3] = [tempX3, tempY3]
+        cooldown = True
+      if event.key == pygame.K_RIGHT:
+        Dir = "Right"
+      if event.key == pygame.K_LEFT:
+        Dir = "Left"
+      if event.key == pygame.K_d:
+        pause = True
+        start = False
+      if event.key == pygame.K_DOWN and not holdCooldown:
+        holdCooldown = True
+        if not once:
+          hold_function()
+          once = True
+    if event.type == pygame.KEYUP:
+      if event.key == pygame.K_RIGHT:
+        Dir = "STOP"
+      if event.key == pygame.K_LEFT:
+        Dir = "STOP"
+      if event.key == pygame.K_UP:
+        cooldown = False
+      if event.key == pygame.K_DOWN:
+        holdCooldown = False
+    
+    # Movement
+    if Dir == "Right" and Right:
+      xDir = 1
+      lock_timer = 0
+    elif Dir == "Left" and Left:
+      xDir = -1
+      lock_timer = 0
+    elif Dir == "STOP" and not (Left or Right):
+      xDir = 0
+      
+    # Getting the X/Y Coords
+    temp_coords = [
+    (B_List[0][0] + xDir, B_List[0][1] + yDir),
+    (B_List[1][0] + xDir, B_List[1][1] + yDir),
+    (B_List[2][0] + xDir, B_List[2][1] + yDir),
+    (B_List[3][0] + xDir, B_List[3][1] + yDir),
+    ]
+    px, py = P_List[0]
+    px1, py1 = P_List[1]
+    px2, py2 = P_List[2]
+    px3, py3 = P_List[3]
+    
+    hx, hy = h_List[0]
+    hx1, hy1 = h_List[1]
+    hx2, hy2 = h_List[2]
+    hx3, hy3 = h_List[3]
+    
+    grid[px][py] = 3
+    grid[px1][py1] = 3
+    grid[px2][py2] = 3
+    grid[px3][py3] = 3
+    
+    grid[hx][hy] = 4
+    grid[hx1][hy1] = 4
+    grid[hx2][hy2] = 4
+    grid[hx3][hy3] = 4
+    
+    if not check_collision(temp_coords, grid):
+      tempX, tempY = temp_coords[0]
+      tempX1, tempY1 = temp_coords[1]
+      tempX2, tempY2 = temp_coords[2]
+      tempX3, tempY3 = temp_coords[3]
+    else:
+      tempY = temp_coords[0][1]
+      tempY1 = temp_coords[1][1]
+      tempY2 = temp_coords[2][1]
+      tempY3 = temp_coords[3][1]
+    
+    for block in B_List:
+      x, y = block[0], block[1]
+      if 0 <= x < 20 and 0 <= y < 30:
+        grid[x][y] = 0
+    
+    B_List[0] = [tempX, tempY]
+    B_List[1] = [tempX1, tempY1]
+    B_List[2] = [tempX2, tempY2]
+    B_List[3] = [tempX3, tempY3]
+    Left, Right = check_wall_collision(B_List, s_List, tempX, tempX1, tempX2, tempX3)
+    
+    # Blocking movement if collides on side of blocks/wall ****(LEAVE THIS!! IT BREAKS IF DELETED)****
+    for i in range(len(B_List)):
+      # Block Left wall
+      if B_List[i][0] == (i * 20) or not Left:
+        Left = False
+        xDir = 0
+      # Block Right wall
+      if B_List[i][0] == ((i + 1) * 20) or not Right:
+        Right = False
+        xDir = 0
+      # Unblock when in range of board
+      if B_List[i][0] > i * 20 and B_List[i][0] < ((i + 1) * 20) and (Right and Left):
+        Left = True
+        Right = True
+        xDir = 0
+    
+    # Checks if GameOver
+    for i in range(len(B_List)):
+      if any([grid[B_List[i][0]][B_List[i][1]] != 0]) and B_List[i][1] <= 5:
+        start = False
+        gameover = True
+        GameOver()
+    
+    # block movement left or right of saved blocks
+    collision = False
+    for i in range(len(s_List)):
+      sx, sy = s_List[i][0], s_List[i][1]
+      if (
+      (tempY == sy - 1 and tempX == sx) or
+      (tempY1 == sy - 1 and tempX1 == sx) or
+      (tempY2 == sy - 1 and tempX2 == sx) or
+      (tempY3 == sy - 1 and tempX3 == sx)
+      ):
+        collision = True
+        break
+    if collision:
+      yDir = 0
+    if is_colliding():
+      lock_timer += 1
+      if lock_timer >= lock_delay:
+        save_blocks()
+    elif not is_colliding():
+      yDir = 1
+      lock_timer = 0
+      
+      # save blocks when touches the floor
+    for i in range(len(B_List)):
+      if B_List[i][1] == 29:
+        yDir = 0
+        if is_colliding():
+          lock_timer += 1
+          if lock_timer >= lock_delay:
+            save_blocks()
+        else:
+          lock_timer = 0
+    clear_lines()
+    
+    # Draw
+    screen.fill("darkgrey")
+    clock.tick(frames)
+    
+    # Display Save blocks
+    for i in range(len(s_List)):
+      x = s_List[i][0]
+      y = s_List[i][1]
+      t = s_List[i][2]
+      grid[x][y] = 2
+      color_grid[x][y] = SaveColor(t)
+    
+    # Display preveiw block
+    for i in range(len(P_List)):
+      x = P_List[i][0]
+      y = P_List[i][1]
+      grid[x][y] = 3
+    
+    for i in range(len(h_List)):
+      x = h_List[i][0]
+      y = h_List[i][1]
+      grid[x][y] = 4
+    
+    # Display Block
+    for i in range(len(B_List)):
+      x = B_List[i][0]
+      y = B_List[i][1]
+      if 0 <= x < 20 and 0 <= y < 30:
+        grid[x][y] = 1
+        
+    grid[tempX][tempY] = 1
+    grid[tempX1][tempY1] = 1
+    grid[tempX2][tempY2] = 1
+    grid[tempX3][tempY3] = 1
+    
+    # for i in range(len(B_List)):
+    # if ground(s_List, tempX, tempY, tempX1, tempY1, tempX2, tempY2, tempX3, tempY3) or B_List[i][1] == 29:
+    # yDir = 0
+    # elif not ground(s_List, tempX, tempY, tempX1, tempY1, tempX2, tempY2, tempX3, tempY3) and not B_List[i][1] == 29:
+    # yDir = 1
+    
+    # Draw Board
+    color_tet = get_color()
+    color_P = get_color()
+    color_H = get_color()
+
+    for i in range(20):
+      for j in range(30):
+        # Blank grid
+        if grid[i][j] == 0:
+          pygame.draw.rect(screen, "black", (i * 20 + 1, j * 20 + 10, 19, 19))
+        # Player bloc
+        elif grid[i][j] == 1:
+          pygame.draw.rect(screen, color_tet, (i * 20 + 1, j * 20 + 10, 19, 19))
+        # Saved block 
+        elif grid[i][j] == 2:
+          pygame.draw.rect(screen, color_grid[i][j], (i * 20 + 1, j * 20 + 10, 19, 19))
+        # Preview block
+        elif grid[i][j] == 3:
+          pygame.draw.rect(screen, color_P, (i * 20 + 1, j * 20 + 10, 19, 19))
+        # Hold block
+        elif grid[i][j] == 4:
+          pygame.draw.rect(screen, color_H, (i * 20 + 1, j * 20 + 10, 19, 19))
+    
+    # harder progression
+    if num1 == 5 and not cool:
+      frames += 1
+      cool = True
+    elif num1 == 10 and not cool:
+      frames += 1
+      cool = True
+    elif num1 == 15 and not cool:
+      frames += 2
+      cool = True
+    elif num1 == 20 and not cool:
+      frames += 5
+      cool = True
+    else:
+      frames = frames
+    
+    # unpause delay
+    if freeze:
+      time.sleep(1)
+      freeze = False
+      pygame.display.update()
+    screen.blit(score, (sW // 2 - score.get_width() // 2, 10))
+    pygame.display.update()
+pygame.quit()
