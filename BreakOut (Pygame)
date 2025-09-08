@@ -1,0 +1,295 @@
+import pygame
+import time
+pygame.init()
+from pygame.locals import *
+
+
+# loading start up
+   # Setting up screen
+clock = pygame.time.Clock()
+p1 = 200
+sW = 800
+sH = 600
+screen = pygame.display.set_mode((sW, sH))
+pygame.display.set_caption("Break Down")
+   # Setting up game values
+points = 0
+lives = 3
+	# Setting up Fonts/texts
+font = pygame.font.SysFont(None, 50)
+imgScore = font.render("Points:" + " " + str(points), True, "white")
+imgLives = font.render("Lives:" + " " + str(lives), True, "white")
+imgLose = font.render("You Lost!", True, "white")
+imgWin = font.render("You Won!", True, "white")
+imgScoreL = font.render("Your Score Was:" + " " + str(points), True, "white")
+red = (255, 0, 0)
+green = (0, 255, 0)
+yellow = (255, 255, 0)
+white = (255, 255, 255)
+color = white
+# Brick
+   # Brick coordonates
+bX = []
+bY = []
+bW = sW / 10 - 2
+bH = 20
+brick = []
+num = 0
+
+
+   # Drawing the bricks
+for j in range(6):
+  for i in range(10):
+      bX.append(i * (bW + 2))
+      bY.append((j * (bH + 2)))
+      brick.append(pygame.draw.rect(screen, "yellow", (bX[num], bY[num] + 40, bW, bH)))
+  num += 1
+  
+# Ball
+   # Ball speed
+speed = 5
+xSpeed = 0
+ySpeed = 5
+   # Ball coords
+xB = sW / 2 - 2
+yB = sH / 2
+rB = 20
+   #   Drawing the ball
+ball = pygame.draw.rect(screen, "white", (xB, yB, rB, rB))
+
+
+# paddle stuff
+yP = 550
+xP = sW / 2 - 50
+paddle = pygame.draw.rect(screen, color, (xP, yP, 100, 40))
+diR = "stop"
+
+
+
+
+running = True
+# game loop
+while running:
+  # events
+  for events in pygame.event.get():
+      if events.type == pygame.QUIT:
+          running = False
+
+
+
+
+   # Paddle control
+      if events.type == KEYDOWN:
+          if events.key == K_LEFT:
+              diR = "Left"
+          if events.key == K_RIGHT:
+              diR = "Right"
+      if events.type == KEYUP:
+          if events.key == K_LEFT:
+              diR = "stop"
+          if events.key == K_RIGHT:
+              diR = "stop"
+
+
+
+
+
+
+
+
+  # logic
+  xB += xSpeed
+  yB += ySpeed
+
+
+
+
+# Paddle movements
+  if diR == "Left" and xP > 0:
+      xP -= 5
+  if diR == "Right" and xP < 800 - 100:
+      xP += 5
+
+
+
+
+  # collide stuff...this really, really cool part.
+  if pygame.Rect.colliderect(paddle, ball):
+      # find the dy  between the ball the paddle
+      deltay = xB - (xP + 50)  # this is distance from mid p to mid b + a bit
+      fraction = deltay / (65 + 20 + 10)
+      xSpeed = fraction * speed
+      ySpeed = (speed ** 2 - xSpeed ** 2) ** .5 * -1
+      
+
+
+
+
+# Ball bounce
+   # Ball bounce celing
+  if yB < 50:
+      ySpeed *= -1
+      
+   # Ball bounce floor kill
+  if yB > sH - 10:
+      
+      screen.fill("black")
+      yB = 300
+      xB = sW / 2 - 3
+      xP = sW / 2 - 50
+      xSpeed = 0
+      lives -= 1
+      imgLives = font.render("Lives:" + " " + str(lives), True, "white")
+      paddle = pygame.draw.rect(screen, "white", (xP, yP, 100, 40))
+      ball = pygame.draw.rect(screen, "white", (xB, yB, rB, rB))
+      if points < 1000:
+          screen.blit(imgScore, (sW - p1, 10))
+      else:
+          screen.blit(imgScore, (sW - 250, 10))
+      screen.blit(imgLives, (sW - 750, 10))
+      pygame.display.update()
+      time.sleep(0.5)
+
+
+
+
+   # Ball bounce wall
+  if xB > sW - 20 or xB < 0:
+      xSpeed *= -1
+  elif xB == 1000:
+      xSpeed = 0
+      ySpeed = 0
+
+
+
+
+  # draw
+  if lives >= 3:
+    color = white
+  elif lives == 2:
+    color = green
+  elif lives == 1:
+    color = yellow
+  else:
+    color = red
+  clock.tick(60)
+  screen.fill("black")
+  paddle = pygame.draw.rect(screen, color , (xP, yP, 100, 40))
+  ball = pygame.draw.rect(screen, "white", (xB, yB, rB, rB))
+  num = 0
+
+
+  # Points system
+  # brick collision
+  for i in range(60):
+      if pygame.Rect.colliderect(ball, brick[i]):
+          ySpeed *= -1
+          bY[i] -= 500
+
+
+          # 6th column
+          if 0 <= i <= 10:
+              points += 500
+              imgScore = font.render("Points:" + " " + str(points), True, "white")
+
+
+          # 5th column
+          if 10 <= i <= 20:
+              points += 100
+              imgScore = font.render("Points:" + " " + str(points), True, "white")
+
+
+          # 4th column
+          if 20 <= i <= 30:
+              points += 50
+              imgScore = font.render("Points:" + " " + str(points), True, "white")
+
+
+          # 3rd column
+          if 30 <= i <= 40:
+              points += 40
+              imgScore = font.render("Points:" + " " + str(points), True, "white")
+              
+          # 2nd column
+          if 40 <= i <= 50:
+              points += 20
+              imgScore = font.render("Points:" + " " + str(points), True, "white")
+
+
+          # 1st column
+          if 50 <= i <= 60:
+              points += 5
+              imgScore = font.render("Points:" + " " + str(points), True, "white")
+              
+
+
+
+
+      imgScoreL = font.render("Your Score Was:" + " " + str(points), True, "white")
+
+
+
+
+      # Bricks color
+  for j in range(6):
+      for i in range(10):
+          if j == 0:
+              brick[num] = pygame.draw.rect(screen, "red", (bX[num], bY[num]+50, bW, bH))
+          elif j == 1:
+              brick[num] = pygame.draw.rect(screen, "blue", (bX[num], bY[num]+50, bW, bH))
+          elif j == 2:
+              brick[num] = pygame.draw.rect(screen, "orange", (bX[num], bY[num]+50, bW, bH))
+          elif j == 3:
+              brick[num] = pygame.draw.rect(screen, "Green", (bX[num], bY[num]+50, bW, bH))
+          elif j == 4:
+              brick[num] = pygame.draw.rect(screen, "yellow", (bX[num], bY[num]+50, bW, bH))
+          elif j == 5:
+              brick[num] = pygame.draw.rect(screen, "pink", (bX[num], bY[num]+50, bW, bH))
+          num += 1
+
+
+# Win lose conditions
+  
+  # point display
+  if points < 7860 and lives >= 0:
+      if points < 1000:
+          screen.blit(imgScore, (sW - p1, 10))
+      else:
+          screen.blit(imgScore, (sW - 250, 10))
+      screen.blit(imgLives, (sW - 750, 10))
+
+
+
+
+   # Lose condition
+  if lives < 0:
+      screen.blit(imgLose, (sW / 2 - 100, sH / 2 - 100))
+      screen.blit(imgScoreL, (sW / 2 - 150, sH / 2 + 100))
+      screen.blit(imgLives, (sW + 750, sH + 100))
+      xB = 1000
+      yP = 1000
+      xSpeed = 0
+      ySpeed = 0
+      for i in range(60):
+        bY[i] -= 500
+      pygame.display.update()
+
+
+
+
+   # Win condition
+  if points >= 7860:
+      time.sleep(.5)
+      screen.blit(imgWin, (sW / 2 - 100, sH / 2 - 100))
+      screen.blit(imgScoreL, (sW / 2 - 150, sH / 2 + 100))
+      screen.blit(imgLives, (sW + 750, sH + 100))
+      xB = 1000
+      yP = 1000
+      xSpeed = 0
+      ySpeed = 0
+      for i in range(60):
+          bY[i] -= 500
+      pygame.display.update()
+  pygame.display.update()
+# exit
+pygame.quit()
