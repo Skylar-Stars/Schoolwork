@@ -1,0 +1,406 @@
+import pygame
+import random
+import time
+pygame.init()
+sW = 500
+sH =550
+
+
+screen = pygame.display.set_mode((sW, sH))
+running = True
+clock = pygame.time.Clock()
+Fruit_Spawn = True
+
+
+GameOver = False
+Start = True
+won = True
+gameTime = 0
+ranColor = 0
+highScore = 0
+score = 625
+speed = 5
+
+
+Up = True
+Down = True
+Left = True
+Right = True
+if random.randint(1,2) == 1:
+  xspeed = 5
+else:
+  xspeed = -5
+if random.randint(1,2) == 1:
+  yspeed = 5
+else:
+  yspeed = -5
+
+
+xb = sW//2
+yb = sH//2
+color = "black"
+
+
+ball = []
+ball.append([xb,yb,xspeed,yspeed])
+
+
+font = pygame.font.SysFont(None, 50)
+title_text = font.render("Snake", True, "white")
+instructions = font.render("Press ENTER to Start", True, "white")
+Game_Over_Txt = font.render("Game Over", True, "white")
+score_Txt = font.render("Score: " + str(score), True, "white")
+Highscore_Txt = font.render("HighScore: " + str(highScore), True, "white")
+win_Txt = font.render("You Win!", True, "white")
+score_Txtd = font.render("Score: " + str(score), True, "white")
+
+
+diR = "stop"
+xP = sW//2 -100
+yP = sH - 60
+paddle = pygame.draw.rect(screen, "white", (xP, yP, 60, 20))
+
+
+grid = []
+for i in range(25):
+   grid.append([0] * 25)
+sList = []
+sList.append([10, 10])
+sList.append([9, 10])
+
+
+xDir = 1
+yDir = 0
+# apple
+aX = random.randint(0, 24)
+aY = random.randint(0, 24)
+grid[aX][aY] = 3
+
+
+
+
+while running:
+  for event in pygame.event.get():
+    if event.type == pygame.QUIT:
+      running = False
+  if not Start:
+    screen.fill("black")
+  
+    def StartScreen():
+      screen.blit(title_text, (sW / 2 - title_text.get_width() // 2, 20))
+      screen.blit(instructions, (sW / 2 - instructions.get_width() // 2, 60))
+    
+    if event.type == pygame.KEYDOWN:
+      if event.key == pygame.K_RETURN:
+        Start = True
+    
+    StartScreen()
+    pygame.display.update()
+
+
+# Logic
+  if Start:
+    if won:
+      screen.fill(color)
+      screen.blit(win_Txt,(sW/2 - win_Txt.get_width()//2, 100))
+      screen.blit(instructions, (sW / 2 - instructions.get_width() // 2, 160))
+
+
+      if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_RETURN:
+          grid = []
+          for i in range(25):
+             grid.append([0] * 25)
+          sList = []
+          sList.append([10, 10])
+          sList.append([9, 10])
+          xDir = 1
+          yDir = 0
+          # apple
+          aX = random.randint(0, 24)
+          aY = random.randint(0, 24)
+          grid[aX][aY] = 3
+          score = 0
+          won = False
+          score_Txt = font.render("Score: " + str(score), True, "white")
+        if event.key == pygame.K_LEFT:
+          diR = "Left"
+        if event.key == pygame.K_RIGHT:
+          diR = "Right"
+      if event.type == pygame.KEYUP:
+        if event.key == pygame.K_LEFT:
+          diR = "stop"
+        if event.key == pygame.K_RIGHT:
+          diR = "stop"
+
+
+      for i in range(len(ball)):
+        ball[i][0] += ball[i][2]
+        ball[i][1] += ball[i][3]
+        
+        if ball[i][0] <= 0:
+          if random.randint(1,2) == 1:
+            xspeed = 5
+          else:
+            xspeed = -5
+          if random.randint(1,2) == 1:
+            yspeed = 5
+          else:
+            yspeed = -5
+
+
+          ball.append([xb,yb, xspeed,yspeed])
+          ball[i][2] *= -1
+
+
+        if ball[i][0] >= sW - 10:
+          if random.randint(1,2) == 1:
+            xspeed = 5
+          else:
+            xspeed = -5
+          if random.randint(1,2) == 1:
+            yspeed = 5
+          else:
+            yspeed = -5
+          ball.append([xb,yb, xspeed,yspeed])
+          ball[i][2] *= -1
+          ranColor = random.randint(1,6)
+  
+        if ball[i][1] <= 10:
+          if random.randint(1,2) == 1:
+            xspeed = 5
+          else:
+            xspeed = -5
+          if random.randint(1,2) == 1:
+            yspeed = 5
+          else:
+            yspeed = -5
+          ball.append([xb,yb, xspeed,yspeed])
+          ball[i][3] *= -1
+
+
+        if ball[i][1] >= sH - 10:
+          if random.randint(1,2) == 1:
+            xspeed = 5
+          else:
+            xspeed = -5
+          if random.randint(1,2) == 1:
+            yspeed = 5
+          else:
+            yspeed = -5
+
+
+          ball.append([xb,yb, xspeed,yspeed])
+          ball[i][3] *= -1
+          ranColor = random.randint(1,6)
+        if len(ball) >= 280:
+          del ball[len(ball)-1]
+        if pygame.Rect.colliderect(paddle, ball[i]):
+          # find the dy  between the ball the paddle
+          deltay = ball[i][0] - (xP + 30)  # this is distance from mid p to mid b + a bit
+          fraction = deltay / (65 + 20 + 10)
+          ball[i][2] = fraction * speed
+          ball[i][3] = (speed ** 2 - ball[i][2] ** 2) ** .5 * -1
+        
+        if diR == "Left" and xP > 0:
+          xP -= 5
+        if diR == "Right" and xP < sW - 60:
+          xP += 5
+
+
+        paddle = pygame.draw.rect(screen, "white", (xP, yP, 60, 20))
+        pygame.draw.rect(screen,"white",(ball[i][0],ball[i][1],10,10))
+      if ranColor == 1:
+        color = "darkblue"
+      elif ranColor == 2:
+        color = "blue"
+      elif ranColor == 3:
+        color = "red"
+      elif ranColor == 4:
+        color = "pink"
+      elif ranColor == 5:
+        color = "cyan"
+      elif ranColor == 6:
+        color = "yellow"
+        
+      clock.tick(30)
+      pygame.display.update()
+
+
+    if GameOver:
+      screen.fill("black")
+      def deathScreen():
+        screen.blit(Game_Over_Txt, (sW/2 - Game_Over_Txt.get_width() // 2, 10))
+        score_Txtd = font.render("Your score was: " + str(score), True, "white")
+        screen.blit(score_Txtd, (sW/2 - score_Txtd.get_width()//2, 100))
+        screen.blit(instructions, (sW / 2 - instructions.get_width() // 2, 70))
+      if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_RETURN:
+          score = 0
+          score_Txt = font.render("Score: " + str(score), True, "white")
+          grid = []
+          for i in range(25):
+             grid.append([0] * 25)
+          sList = []
+          sList.append([10, 10])
+          sList.append([9, 10])
+
+
+          xDir = 1
+          yDir = 0
+          # apple
+          aX = random.randint(0, 24)
+          aY = random.randint(0, 24)
+          grid[aX][aY] = 3
+          GameOver = False
+      
+      deathScreen()
+      pygame.display.update()
+      
+    if not GameOver and not won:
+        
+      if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_DOWN and Down:
+          xDir = 0
+          yDir = 1
+        elif event.key == pygame.K_UP and Up:
+          xDir = 0
+          yDir = -1
+        elif event.key == pygame.K_RIGHT and Right:
+          xDir = 1
+          yDir = 0
+        elif event.key == pygame.K_LEFT and Left:
+          xDir = -1
+          yDir = 0
+          
+      if yDir == 1:
+        Up = False
+      elif yDir != 1:
+        Up = True
+        
+      if yDir == -1:
+        Down = False
+      elif yDir != -1:
+        Down = True
+        
+      if xDir == 1:
+        Left = False
+      elif xDir != 1:
+        Left = True
+        
+      if xDir == -1:
+        Right = False
+      elif xDir != -1:
+        Right = True
+        
+      tempX = sList[len(sList) - 1][0] + xDir
+      tempY = sList[len(sList) - 1][1] + yDir
+      sList.append([tempX, tempY])
+      
+      if tempX == aX and tempY == aY:
+        while True:
+          aX = random.randint(1,23)
+          aY = random.randint(1,23)
+          Fruit_Spawn = False
+          for i in range(len(sList)):
+            if aX == sList[i][0] and aY == sList[i][1]:
+              Fruit_Spawn = True
+          if not Fruit_Spawn:
+            break
+        grid[aX][aY] = 3
+        score += 1
+        if score > highScore:
+          highScore += 1
+        score_Txt = font.render("Score: " + str(score), True, "white")
+        Highscore_Txt = font.render("HighScore: " + str(highScore), True, "white")
+
+
+      else:
+        grid[sList[0][0]][sList[0][1]] = 0
+        del sList[0]
+        
+      for i in range(len(sList)):
+        x = sList[i][0]
+        y = sList[i][1]
+        grid[x][y] = 1
+        
+
+
+      for i in range(len(sList)-1):
+        if sList[len(sList)-1][0] == i * 25 and xDir == -1:
+          Up = False
+          Down = False
+          Left = False
+          Right = False
+          xDir = 0
+          yDir = 0
+
+
+        if sList[len(sList)-1][0] == ((i+1) * 25) -1 and xDir == 1:
+          Up = False
+          Down = False
+          Left = False
+          Right = False
+          xDir = 0
+          yDir = 0
+
+
+        if sList[len(sList)-1][1] == 24 and yDir == 1:
+          Up = False
+          Down = False
+          Left = False
+          Right = False
+          xDir = 0
+          yDir = 0
+
+
+        if sList[len(sList)-1][1] <= -1 and yDir == -1:
+          Up = False
+          Down = False
+          Left = False
+          Right = False
+
+
+          xDir = 0
+          yDir = 0
+
+
+      for i in range(len(sList)-1):
+        x1 = sList[len(sList)-1][0]
+        y1 = sList[len(sList)-1][1]
+        
+        x2 = sList[i][0]
+        y2 = sList[i][1]
+        if x1 == x2 and y1 == y2:
+          GameOver = True
+      if score == 625:
+        won = True
+      #Draw
+      if gameTime%2 == 0:
+        clock.tick(13)
+      else:
+        clock.tick(10)
+
+
+      screen.fill("black")
+      for i in range(25):
+        for j in range(25):
+          if grid[i][j] == 0:
+            if (i + j) % 2 == 0:
+               pygame.draw.rect(screen, "green", (i * 20 + 1, j * 20 + 50, 18, 18))
+            else:
+               pygame.draw.rect(screen, "darkgreen", (i * 20 + 1, j * 20 + 50, 18, 18))
+          if grid[i][j] == 1:
+            pygame.draw.rect(screen, "blue", (i * 20 + 1, j * 20 + 50, 18, 18))
+
+
+          if grid[i][j] == 3:
+            pygame.draw.rect(screen, "red", (i * 20 + 1, j * 20 + 50, 18, 18))
+  
+  
+      screen.blit(Highscore_Txt,(sW/2 - score_Txt.get_width()// 2, 2))
+  
+      screen.blit(score_Txt,( sW/2 -score_Txt.get_width() -100, 2))
+      gameTime += 1
+      pygame.display.update()
+pygame.quit()
