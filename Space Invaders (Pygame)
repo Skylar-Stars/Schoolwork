@@ -1,0 +1,1287 @@
+import pygame
+
+
+pygame.init()
+import time
+import random
+
+
+# Essentials
+sW = 800
+sH = 600
+screen = pygame.display.set_mode((sW, sH))
+running = True
+clock = pygame.time.Clock()
+startRound = False
+Round = 0
+points = 0
+lives = 0
+fNum = 0
+lifea = 0
+lifeMiss = 0
+lifeH = 0
+lifep1 = 0
+deatha = 0
+dhit = 0
+dk = 0
+game_time = 0
+start = False
+pause = False
+hard_mode = False
+High_Score = 0
+click_cooldown = False
+x = sW//2 - 100
+y = sH//2 + 100
+text = "Hard Mode"
+width = 220
+height = 50
+menusound = pygame.mixer.Sound('')
+
+
+spritesheets = pygame.image.load("spritesheet.png").convert_alpha()
+# Color
+pink = (220, 20, 60)
+red = (255, 0, 0)
+dRed = (128, 0, 0)
+orange = (255, 165, 0)
+dOrange = (255, 140, 0)
+yellow = (255, 255, 0)
+green = (0, 255, 0)
+blue = (0, 0, 255)
+white = (255, 255, 255)
+black = (0, 0, 0)
+colour = dRed
+hover_color = dOrange
+
+
+
+
+# Texts
+font_button = pygame.font.Font(None, 36)
+font = pygame.font.SysFont(None, 50)
+score = font.render("Score: " + str(points), True, white)
+livesboard = font.render("Lives: " + str(lives), True, white)
+lose = font.render("You Died!", True, white)
+loseScore = font.render("Your Score Was: " + str(points), True, white)
+roundTxt = font.render("Round: " + str(Round), True, white)
+roundLose = font.render("Your Round Was: " + str(Round), True, white)
+dhitTxt = font.render("Destroyed Death pellets: " + str(dhit) + "/" + str(deatha), True, white)
+dkTxt = font.render("Collected Death pellets: " + str(dk) + "/" + str(deatha),True, white)
+miss = font.render("Missed Life pellets: " + str(lifeMiss) + "/" + str(lifea), True, white)
+Lifep = font.render("Collected Life pellets: " + str(lifep1) + "/" + str(lifea), True, white)
+lifeHit = font.render("Shoted Life pellets: " + str(lifeH) + "/" + str(lifea), True, white)
+High_scoreTxt = font.render("High Score: " + str(High_Score), True, white)
+title_text = font.render("Space Invaders", True, white)
+instructions = font.render("Press ENTER to Start", True, white)
+pause_text = font.render("Paused", True, white)
+resume_text = font.render("Press ENTER to Resume", True, white)
+
+
+l1 = pygame.draw.rect(screen, white, (0, sH / 2 - 60, sW, 1))
+
+
+# Alien
+ # Alien lasers
+alien_lasers = []
+laser_speed = 5
+alien_laserWidth = 6
+alien_laserHeight = 12
+al = 0
+# Small alien
+a = 0
+alien = []
+xA = []
+yA = []
+wA = 25
+hA = 25
+num = 0
+vm = False
+bm = False
+fm = True
+f = False
+alife = []
+color = []
+for i in range(8):
+   for j in range(3):
+       xA.append(i * (wA + 20))
+       yA.append(j * (hA + 30))
+       color.append(white)
+
+
+       alien.append(pygame.draw.rect(screen, color[num], (xA[num], yA[num], wA, hA)))
+       alife.append(True)
+
+
+       num += 1
+m = 2
+v = 10
+
+
+# big alien
+bX = sW + 24
+bY = 24
+bW = 24
+bH = 10
+balien = pygame.draw.rect(screen, green, (bX, bY, bW, bH))
+bMove = False
+
+
+# Random life pellet
+randomNum = random.randint(0, 10)
+lColor = (white, pink, blue, red, green, yellow, black)
+ranColor = random.randint(0, 5)
+ranX = -20
+ranY = -20
+lifeX = ranX
+lifeY = ranY
+lifeW = 20
+lifeH = 20
+lifeP = pygame.draw.rect(screen, lColor[ranColor], (lifeX, lifeY, lifeW, lifeH))
+fine = False
+xSpeed = 3
+ySpeed = -3
+floorT = False
+one = True
+p = 0
+p1 = 0
+
+
+# Random death pellet
+randomNum = random.randint(0,10)
+lColor1 = (dRed, dOrange, orange, red,yellow, black)
+ranColor1 = random.randint(0,4)
+ranXd = -100
+ranYd =  -100
+dX = ranX
+dY = ranY
+dW = 30
+dH = 30
+deathP = pygame.draw.rect(screen,lColor1[ranColor],(dX,dY,dW,dH))
+fine1 = False
+xSpeedd = 3
+ySpeedd = -3
+one1 = True
+p2 = 0
+# stars
+random_StarX = []
+random_StarY = []
+stars = []
+star_width = 2
+star_height = 2
+star_color = (red, orange, dRed, white,white,white,white)
+for i in range(40):
+  random_StarX.append(random.randint(0,sW-star_width))
+  random_StarY.append(random.randint(0,sH-star_height))
+  stars.append(pygame.draw.rect(screen, white, (random_StarX[i], random_StarY[i], star_width, star_height)))
+star_speed = 1
+# Player
+pW = 20
+pH = 20
+Xp = sW / 2
+Yp = sH - 110
+ship = pygame.draw.rect(screen, blue, (Xp, Yp, pW, pH))
+diR = "Stop"
+s = 2
+# Laser
+lX = -15
+lY = Yp - 70
+lW = 5
+lH = 30
+laserp = pygame.draw.rect(screen, red, (lX, lY, lW, lH))
+ok = True
+n = 5
+
+
+while running:
+   for event in pygame.event.get():
+       if event.type == pygame.QUIT:
+            running = False
+
+
+           # Function: Reset all stats and game
+
+
+
+
+   def speed_Star(Round, star_speed, hard_mode):
+       if hard_mode:
+           if Round == 0:
+               star_speed = 5
+           else:
+               star_speed = 7
+       else:
+           if Round == 0:
+               star_speed = 1
+           elif Round == 1:
+               star_speed = 2
+           elif Round == 2:
+               star_speed = 2.5
+           elif Round == 3:
+               star_speed = 3
+           elif Round == 4:
+               star_speed = 4
+           elif Round == 5:
+               star_speed = 4.5
+           elif Round == 6:
+               star_speed = 4.5
+           elif Round == 7:
+               star_speed = 4.5
+           elif Round == 8:
+               star_speed = 5
+           elif Round == 50:
+               star_speed = 10
+           elif Round > 50:
+               star_speed = 20
+           else:
+               star_speed = 1
+       return star_speed
+
+
+
+
+   if not start:
+       def draw_button(text, x, y, width, height, colour, hover_color, action=None):
+           if not pause:
+               mouse = pygame.mouse.get_pos()
+               click = pygame.mouse.get_pressed()
+
+
+               if x < mouse[0] < x + width and y < mouse[1] < y + height:
+                   pygame.draw.rect(screen, hover_color, (x, y, width, height))
+               else:
+                   pygame.draw.rect(screen, colour, (x, y, width, height))
+               text_surf = font_button.render(text, True, white)
+               text_rect = text_surf.get_rect(center=(x + width // 2, y + height // 2))
+               screen.blit(text_surf, text_rect)
+
+
+
+
+       def reset():
+           global Round, points, lives, game_over, High_Score, fm, ok, pause, Start
+           if game_over:
+               if High_Score < points:
+                   High_Score = points
+               High_scoreTxt = font.render("High Score: " + str(High_Score), True, white)
+               Round = 0
+               points = 0
+               lives = 3
+               fm = True
+               ok = True
+               pause = False
+               game_over = False
+           screen.fill(black)
+           pygame.display.update()
+
+
+           Start = False
+
+
+
+
+           print("Restarting!")
+
+
+       def toggle_hard_mode():
+           global hard_mode
+           hard_mode = not hard_mode
+
+
+
+
+       if not pause:
+           for i in range(40):
+               random_color = random.randint(0, 6)
+               stars[i] = pygame.draw.rect(screen, star_color[random_color], (random_StarX[i], random_StarY[i], star_width, star_height))
+               if random_StarY[i] > 0:
+                   random_StarY[i] += star_speed
+               if random_StarY[i] > sH:
+                   random_StarY[i] = random.randint(0, sH - 1)
+                   random_StarX[i] = random.randint(0, sW - 1)
+
+
+               pygame.display.update()
+               # Function: Pause system
+
+
+
+
+       def pause_screen(pause, start):
+           if pause:
+               screen.blit(pause_text, (sW // 2 - pause_text.get_width() // 2, 200))
+               screen.blit(resume_text, (sW // 2 - resume_text.get_width() // 2, 300))
+               if event.type == pygame.KEYDOWN:
+                   if event.key == pygame.K_p:
+                       pause = False
+
+
+
+
+       def Start_screen():
+           if not pause:
+               screen.fill(black)
+               screen.blit(title_text, (sW / 2 - title_text.get_width() // 2, 200))
+               screen.blit(instructions, (sW / 2 - instructions.get_width() // 2, 300))
+               pygame.display.update()
+
+
+       if event.type == pygame.KEYDOWN:
+           if event.key == pygame.K_RETURN:
+               start = True
+       if event.type == pygame.MOUSEBUTTONDOWN and not click_cooldown:
+           if x < event.pos[0] < x + width and y < event.pos[1] < y + height:  # Check if button was clicked
+               toggle_hard_mode()
+               click_cooldown = True
+       if event.type == pygame.MOUSEBUTTONUP:
+           click_cooldown = False
+
+
+       Start_screen()
+       pause_screen(pause, start)
+       draw_button(f"Hard Mode: {hard_mode}", x, y, width, height, colour, hover_color, toggle_hard_mode)
+       pygame.display.update()
+       star_speed = speed_Star(Round, star_speed, hard_mode)
+   if start:
+       game_time += 1
+       alive_aliens = [i for i in range(len(alife)) if alife[i]]
+
+
+       if random.randint(1, 100) == 1 and alive_aliens:
+           shooting_index = random.choice(alive_aliens)
+           laser_x = alien[shooting_index].centerx - (alien_laserWidth // 2)
+           laser_y = alien[shooting_index].bottom + 20
+           laser = pygame.Rect(laser_x, laser_y, alien_laserWidth, alien_laserHeight)
+           alien_lasers.append(laser)
+
+
+       for laser in alien_lasers[:]:
+           laser.y += laser_speed
+           if laser.top > sH:
+               alien_lasers.remove(laser)
+
+
+       for laser in alien_lasers[:]:
+           if laser.colliderect(ship):
+               lives -= 1
+               alien_lasers.remove(laser)
+               livesboard = font.render("Lives: " + str(lives), True, white)
+
+
+       for laser in alien_lasers[:]:
+           if laser.colliderect(laserp):
+               points += 50
+               alien_lasers.remove(laser)
+               ok = True
+               lY = - 70
+               score = font.render("Score: " + str(points), True, white)
+
+
+
+
+       def laseramount_alien(ay, Round, hard_mode):
+           if hard_mode:
+               if Round == 0:
+                   ay = 20
+               elif Round >= 1:
+                   ay = 10
+           else:
+               if Round == 1:
+                   ay = 750
+               elif Round == 2:
+                   ay = 700
+               elif Round == 3:
+                   ay = 650
+               elif Round == 4:
+                   ay = 500
+               elif Round == 5:
+                   ay = 450
+               elif Round == 6:
+                   ay = 300
+               elif Round == 7:
+                   ay = 250
+               elif Round == 8:
+                   ay = 250
+               elif Round == 9:
+                   ay = 200
+               elif Round == 100:
+                   ay = 20
+               elif Round > 100:
+                   ay = 10
+               elif Round > 50:
+                   ay = 40
+               elif Round == 50:
+                   ay = 50
+               elif Round >= 20:
+                   ay = 100
+               elif Round >= 10:
+                   ay = 150
+               else:
+                   ay = 800
+           return ay
+
+
+
+
+       ay = laseramount_alien(y, Round, hard_mode)
+
+
+
+
+       def cal_laserSpeed(al, laser_speed, hard_mode):
+           if hard_mode:
+               laser_speed = 8.5
+           else:
+               for i in range(24):
+                   if alife[i]:
+                       al += 1
+                   elif al >= 24:
+                       laser_speed = 5
+                   elif al >= 20:
+                       laser_speed = 6
+                   elif al >= 15:
+                       laser_speed = 7
+                   elif al >= 10:
+                       laser_speed = 7.5
+                   elif al >= 5:
+                       laser_speed = 8
+                   elif al >= 1:
+                       laser_speed = 8.5
+                   else:
+                       laser_Speed = 5
+           return laser_speed
+
+
+
+
+       laser_speed = cal_laserSpeed(al, laser_speed, hard_mode)
+
+
+
+
+
+
+       # Functions
+       # Function: start next round
+       def roundStart(startRound, a, fm, bm, v, f):
+           if startRound:
+               num = 0
+               for i in range(8):
+                   for j in range(3):
+                       xA[num] = (i * (wA + 20))
+                       yA[num] = (j * (hA + 30))
+                       color[num] = white
+                       alife[num] = True
+                       alien[num] = pygame.draw.rect(screen, color[num], (xA[num] + 150, yA[num] + 50, wA, hA))
+                       num += 1
+                       screen.fill(black)
+                       pygame.display.update()
+               startRound = False
+
+
+
+
+       # Function to reset after a loss life
+       def roundReset(startRound, a, fm, bm, v, f):
+           if startRound:
+               num = 0
+               for i in range(8):
+                   for j in range(3):
+                       if alife[num]:
+                           xA[num] = (i * (wA + 20))
+                           yA[num] = (j * (hA + 30))
+                           color[num] = white
+                           alien[num] = pygame.draw.rect(screen, color[num], (xA[num] + 150, yA[num] + 50, wA, hA))
+                           screen.fill(black)
+                           pygame.display.update()
+                       num += 1
+               startRound = False
+
+
+
+
+       # Function: life pellet spawn
+       def lifeCoorx(ranX, fine):
+           if fine:
+               ranX = random.randint(20, sW)
+               return ranX
+           else:
+               return -20
+
+
+           # Function: life pellet spawn
+
+
+
+
+       def lifeCoory(ranY, fine):
+           if fine:
+               ranY = random.randint(20, sH - 60)
+               return ranY
+           else:
+               return -20
+
+
+
+
+       # Function: Death pellet X spawn
+       def lifeCoorxd(ranXd, fine1):
+           if fine1:
+               ranXd = random.randint(20, sW)
+               return ranXd
+           else:
+               return -20
+
+
+           # Function: Death pellet Y spawn
+
+
+
+
+       def lifeCooryd(ranYd, fine1):
+           if fine1:
+               ranYd = random.randint(20, sH - 60)
+               return ranYd
+           else:
+               return -20
+
+
+
+
+       # Function: Laser Speed
+           # Function: Laser Speed
+       def laserSpeed(n, Round, hard_mode):
+           if hard_mode:
+               if Round == 0:
+                   n = 12
+               else:
+                   n = 15
+           else:
+               if Round == 1:
+                   n = 4
+               elif Round == 2:
+                   n = 4.5
+               elif Round == 3:
+                   n = 4.5
+               elif Round == 4:
+                   n = 5
+               elif Round == 5:
+                   n = 5.5
+               elif Round == 6:
+                   n = 6
+               elif Round == 7:
+                   n = 7
+               elif Round == 8:
+                   n = 8
+               elif Round == 9:
+                   n = 9.5
+               elif Round > 50:
+                   n = 15
+               elif Round == 50:
+                   n = 14.5
+               elif Round >= 20:
+                   n = 12
+               elif Round >= 10:
+                   n = 10
+
+
+           return n
+
+
+       # Function: Game over after all lives lost
+       def gameOver():
+           if lives < 0:
+               for i in range(24):
+                   yA[i] = -1000
+                   alife[i] = False
+               global game_over, Start
+               game_over = True
+               vm = False
+               fm = False
+               bm = False
+               pY = sH + 100
+               ok = False
+               screen.fill(black)
+               screen.blit(lose, (sW / 2 + 100 - lose.get_width(), sH / 2 - 220))
+               screen.blit(loseScore, (sW / 2 + 200 - loseScore.get_width(), sH / 2 - 140))
+               screen.blit(roundLose, (sW / 2 + 200 - roundLose.get_width(), sH / 2 - 70))
+               screen.blit(dhitTxt, (sW / 2 + 200 - dhitTxt.get_width(), sH / 2 - 10))
+               screen.blit(dkTxt, (sW / 2 + 200 - dkTxt.get_width(), sH / 2 + 50))
+               screen.blit(miss, (sW / 2 + 200 - miss.get_width(), sH / 2 + 110))
+               screen.blit(Lifep, (sW / 2 + 200 - Lifep.get_width(), sH / 2 + 170))
+               screen.blit(lifeHit, (sW / 2 + 200 - lifeHit.get_width(), sH / 2 + 230))
+               pygame.display.update()
+               time.sleep(5)
+               if game_over:
+                   Start = False
+                   reset()
+                   Start_screen()
+
+
+
+
+
+
+
+
+       # side speed movements
+       def checkRoundV(Round, v, hard_mode):
+           if hard_mode:
+               if Round == 0:
+                   v = 17
+               else:
+                   v = 20
+           else:
+               if Round == 1:
+                   v = 10
+               elif Round == 2:
+                   v = 10.5
+               elif Round == 3:
+                   v = 11
+               elif Round == 4:
+                   v = 12
+               elif Round == 5:
+                   v = 13
+               elif Round == 6:
+                   v = 13.5
+               elif Round == 7:
+                   v = 14
+               elif Round == 8:
+                   v = 14.5
+               elif Round == 50:
+                   v = 17
+               elif Round > 50:
+                   v = 20
+               else:
+                   v = v
+           return v
+
+
+           # side speed movements
+       star_speed = speed_Star(Round, star_speed, hard_mode)
+
+
+       def checkRoundM(Round, m, hard_mode):
+           if hard_mode:
+               if Round == 0:
+                   m = 4.5
+               else:
+                   m = 5
+           else:
+               if Round == 1:
+                   m = 2
+               elif Round == 2:
+                   m = 2
+               elif Round == 3:
+                   m = 2
+               elif Round == 4:
+                   m = 2.5
+               elif Round == 5:
+                   m = 2.5
+               elif Round == 6:
+                   m = 3
+               elif Round == 7:
+                   m = 3.5
+               elif Round == 8:
+                   m = 3.5
+               elif Round == 9:
+                   m = 4
+               elif Round == 10:
+                   m = 4.5
+               elif Round > 10:
+                   m = 5
+           return m
+
+
+           # side speed movements
+
+
+
+
+       def checkRounds(Round, s, hard_mode):
+           if hard_mode:
+               if Round == 0:
+                   s = 5.5
+               else:
+                   s = 6
+           else:
+               if Round == 1:
+                   s = 3
+               elif Round == 2:
+                   s = 3
+               elif Round == 3:
+                   s = 3
+               elif Round == 4:
+                   s = 3.5
+               elif Round == 5:
+                   s = 3.5
+               elif Round == 6:
+                   s = 4
+               elif Round == 7:
+                   s = 4.5
+               elif Round == 8:
+                   s = 4.5
+               elif Round == 9:
+                   s = 5
+               elif Round == 10:
+                   s = 5.5
+               elif Round > 10:
+                   s = 6
+           return s
+
+
+
+
+       s = checkRounds(Round, s, hard_mode)
+       m = checkRoundM(Round, m, hard_mode)
+       v = checkRoundV(Round, v, hard_mode)
+
+
+
+
+       # Controls
+       if event.type == pygame.KEYDOWN:
+           if event.key == pygame.K_RIGHT:
+               diR = "Right"
+           if event.key == pygame.K_LEFT:
+               diR = "Left"
+           if event.key == pygame.K_UP:
+               if ok:
+                   lX = Xp + 6
+                   lY = Yp - 15
+                   ok = False
+           if event.key == pygame.K_p:
+               pause = True
+       if event.type == pygame.KEYUP:
+           if event.key == pygame.K_RIGHT:
+               diR = "Stop"
+           if event.key == pygame.K_LEFT:
+               diR = "Stop"
+           if event.key == pygame.K_p:
+               pause = False
+
+
+       # Movements
+       if diR == "Right" and Xp < sW - 20:
+           Xp += s
+       if diR == "Left" and Xp > 0:
+           Xp -= s
+
+
+       n = laserSpeed(n, Round,hard_mode)
+       # Collision with laser
+       num = 0
+       for i in range(8):
+           for j in range(3):
+               if pygame.Rect.colliderect(laserp, alien[num]) and alife[num]:
+                   yA[num] = -250
+                   xA[num] = -250
+                   color[num] = black
+                   alife[num] = False
+                   lY = -70
+                   ok = True
+                   if j == 0:
+                       points += 50
+                       score = font.render("Score: " + str(points), True, white)
+                       if High_Score < points:
+                           High_Score = points
+                       High_scoreTxt = font.render("High Score: " + str(High_Score), True, white)
+                       loseScore = font.render("Your Score Was: " + str(points), True, white)
+                   if j == 1:
+                       points += 20
+                       score = font.render("Score: " + str(points), True, white)
+                       if High_Score < points:
+                           High_Score = points
+                       High_scoreTxt = font.render("High Score: " + str(High_Score), True, white)
+                       loseScore = font.render("Your Score Was: " + str(points), True, white)
+                   if j == 2:
+                       points += 10
+                       if High_Score < points:
+                           High_Score = points
+                       High_scoreTxt = font.render("High Score: " + str(High_Score), True, white)
+                       score = font.render("Score: " + str(points), True, white)
+                       loseScore = font.render("Your Score Was: " + str(points), True, white)
+
+
+                   # Checking if all aliens are destroyed
+                   a += 1
+                   if a >= 24:
+                       Round += 1
+                       startRound = True
+                       roundStart(startRound, a, fm, bm, v, f)
+                       a = 0
+                       fm = True
+                       bm = False
+                       vm = False
+                       f = False
+                       one = True
+                       startRound = False
+                       roundTxt = font.render("Round: " + str(Round), True, white)
+                       roundLose = font.render("Your Round Was:" + str(Round), True, white)
+               num +=1
+       # Laser logic
+       if not ok:
+           lY -= n
+           if lY < -70:
+               ok = True
+
+
+       # Alien Laser logic
+       num = 0
+
+
+       # Lose life when aliens get to the bottom of the screen
+       num = 0
+       for i in range(8):
+           for j in range(3):
+               if yA[num] >= sH - 140:
+                   lives -= 1
+                   livesboard = font.render("Lives: " + str(lives), True, white)
+                   startRound = True
+                   roundReset(startRound, a, fm, bm, v, f)
+                   fm = True
+                   bm = False
+                   vm = False
+                   f = False
+                   startRound = False
+                   if lives < 0:
+                       gameOver()
+               num += 1
+
+
+
+
+
+
+       # Right movements
+       if fm:
+           for i in range(24):
+               if alife[i] != False:
+                   xA[i] += m
+                   if xA[i] >= sW - 170:
+                       f = False
+                       vm = True
+                       fm = False
+
+
+       # Vertical movements
+       if vm:
+           for i in range(24):
+               if alife[i] != False:
+                   yA[i] += v
+                   if f:
+                       fm = True
+                   else:
+                       bm = True
+           vm = False
+
+
+       # Left movements
+       if bm:
+           for i in range(24):
+               if alife[i] != False:
+                   xA[i] -= m
+                   if xA[i] <= -159:
+                       f = True
+                       vm = True
+                       bm = False
+
+
+           # life pellet logic
+           # Life: Speed
+       if fine:
+           lifeX += xSpeed
+           lifeY += ySpeed
+
+
+           # Life: Celing bounce
+           if lifeY <= 0:
+               ySpeed *= -1
+               ranColor = random.randint(0, 5)
+           # Life: Wall
+           if lifeX > sW - 20 or lifeX < 0:
+               xSpeed *= -1
+               ranColor = random.randint(0, 5)
+           # Life: Floor
+           if lifeY >= sH - 70:
+               ySpeed *= -1
+               p += 1
+
+
+               if floorT:
+                   lifeMiss += 1
+                   ranColor = 6
+                   lifeX = -20
+                   lifeY = -20
+                   fine = False
+           if p == 1:
+               floorT = True
+
+
+           # Life: Collision with alien
+           for i in range(24):
+               if pygame.Rect.colliderect(alien[i], lifeP):
+                   ySpeed *= -1
+
+
+           # Life: Collision with player
+           # Life: Collision with laser
+           if pygame.Rect.colliderect(laserp, lifeP):
+               ranColor = random.randint(0, 5)
+               p1 += 1
+               lY = -70
+               ok = True
+
+
+           if p1 == 2:
+               lifeH += 1
+               ranColor = 6
+               lifeX = -20
+               lifeY = -20
+               lives += 2
+               points += 100
+               if High_Score < points:
+                   High_Score = points
+               High_scoreTxt = font.render("High Score: " + str(High_Score), True, white)
+               score = font.render("Score: " + str(points), True, white)
+               livesboard = font.render("Lives: " + str(lives), True, white)
+               ranColor = 6
+               fine = False
+
+
+           # Life: Collision with ship
+           if pygame.Rect.colliderect(ship, lifeP):
+               lifeP += 1
+               lives += 1
+               livesboard = font.render("Lives: " + str(lives), True, white)
+               ranColor = 6
+               lifeX = -20
+               lifeY = -20
+               points += 50
+               if High_Score < points:
+                   High_Score = points
+               High_scoreTxt = font.render("High Score: " + str(High_Score), True, white)
+               score = font.render("Score: " + str(points), True, white)
+               fine = False
+
+
+           # Life pellet spawn chance
+
+
+           # Life: Round 5
+       if Round == 5 and one:
+           randomNum = random.randint(0, 19)
+           one = False
+           if randomNum == 0:
+               lifea += 1
+               fine = True
+           else:
+               fine = False
+           lifeX = lifeCoorx(ranX, fine)
+           lifeY = lifeCoory(ranY, fine)
+
+
+           # Life: Round 10
+       elif Round == 10 and one:
+           randomNum = random.randint(0, 24)
+           one = False
+           if randomNum == 0:
+               lifea += 1
+               fine = True
+           else:
+               fine = False
+           lifeX = lifeCoorx(ranX, fine)
+           lifeY = lifeCoory(ranY, fine)
+
+
+           # Life: Round 15
+       elif Round == 15 and one:
+           randomNum = random.randint(0, 9)
+           one = False
+           if randomNum == 0:
+               lifea += 1
+               fine = True
+           else:
+               fine = False
+           lifeX = lifeCoorx(ranX, fine)
+           lifeY = lifeCoory(ranY, fine)
+
+
+           # Life: Round 20
+       elif Round == 20 and one:
+           randomNum = random.randint(0, 4)
+           one = False
+           if randomNum == 0:
+               lifea += 1
+               fine = True
+           else:
+               fine = False
+           lifeX = lifeCoorx(ranX, fine)
+           lifeY = lifeCoory(ranY, fine)
+
+
+           # Life: Round 30
+       elif Round == 30 and one:
+           randomNum = random.randint(0, 3)
+           one = False
+           if randomNum == 0:
+               lifea += 1
+               fine = True
+           else:
+               fine = False
+           lifeX = lifeCoorx(ranX, fine)
+           lifeY = lifeCoory(ranY, fine)
+
+
+           # Life: Round 40
+       elif Round == 40 and one:
+           randomNum = random.randint(0, 3)
+           one = False
+
+
+           if randomNum == 0:
+               lifea += 1
+               fine = True
+           else:
+               fine = False
+           lifeX = lifeCoorx(ranX, fine)
+           lifeY = lifeCoory(ranY, fine)
+
+
+           # Life: Round 41+
+       elif Round > 40 and one:
+           one = False
+           randomNum = random.randint(0, 2)
+
+
+           if randomNum == 0:
+               lifea += 1
+               fine = True
+           else:
+               fine = False
+           lifeX = lifeCoorx(ranX, fine)
+           lifeY = lifeCoory(ranY, fine)
+
+
+           # Death pellet logic
+           # Death: Speed
+       if fine1:
+           dX += xSpeedd
+           dY += ySpeedd
+
+
+           # Death: Celing bounce
+           if dY <= 0:
+               ySpeedd *= -1
+               ranColor1 = random.randint(0, 4)
+
+
+           # Death: wall
+           if dX > sW - 20 or dX < 0:
+               xSpeedd *= -1
+               ranColor1 = random.randint(0, 4)
+
+
+           # Death: Floor
+           if dY >= sH - 70:
+               racColor1 = random.randint(0, 4)
+               ySpeedd *= -1
+
+
+           # Death: Collision with alien
+           for i in range(24):
+               if pygame.Rect.colliderect(alien[i], deathP):
+                   ySpeedd *= -1
+
+
+           # Death: Collision with player
+           # Death: Collision with laser
+           if pygame.Rect.colliderect(laserp, deathP):
+               ranColor1 = random.randint(0, 4)
+               dhit += 1
+               p2 += 1
+               lY = -70
+               ok = True
+
+
+           if p2 == 2:
+               ranColor1 = 5
+               dX = -20
+               dY = -20
+               points += 100
+               if High_Score < points:
+                   High_Score = points
+               High_scoreTxt = font.render("High Score: " + str(High_Score), True, white)
+               score = font.render("Score: " + str(points), True, white)
+               fine1 = False
+           # Death: Collision with ship
+           if pygame.Rect.colliderect(ship, deathP):
+               dk += 1
+               lives -= 1
+               livesboard = font.render("Lives: " + str(lives), True, white)
+               ranColor1 = 5
+               dX = -20
+               dY = -20
+               fine1 = False
+
+
+           # Death pellet spawn chance
+           # Death: Round 5
+       if Round == 5 and one1:
+           randomNum = random.randint(0, 49)
+           one1 = False
+           if randomNum == 0:
+               deatha += 1
+               fine1 = True
+           else:
+               fine1 = False
+           dX = lifeCoorxd(ranXd, fine1)
+           dY = lifeCooryd(ranYd, fine1)
+
+
+           # Death: Round 10
+       elif Round == 10 and one1:
+           randomNum = random.randint(0, 34)
+           one1 = False
+           if randomNum == 0:
+               deatha += 1
+               fine1 = True
+           else:
+               fine1 = False
+           dX = lifeCoorxd(ranXd, fine1)
+           dY = lifeCooryd(ranYd, fine1)
+
+
+           # Death: Round 15
+       elif Round == 15 and one1:
+           randomNum = random.randint(0, 9)
+           one1 = False
+           if randomNum == 0:
+               deatha += 1
+               fine1 = True
+           else:
+               fine1 = False
+           dX = lifeCoorxd(ranXd, fine1)
+           dY = lifeCooryd(ranYd, fine1)
+
+
+           # Death: Round 20
+       elif Round == 20 and one1:
+           randomNum = random.randint(0, 7)
+           one1 = False
+           if randomNum == 0:
+               deatha += 1
+               fine1 = True
+           else:
+               fine1 = False
+           dX = lifeCoorxd(ranXd, fine1)
+           dY = lifeCooryd(ranYd, fine1)
+
+
+           # Death: Round 30
+       elif Round == 30 and one1:
+           randomNum = random.randint(0, 5)
+           one1 = False
+           if randomNum == 0:
+               deatha += 1
+               fine1 = True
+           else:
+               fine1 = False
+           dX = lifeCoorxd(ranXd, fine1)
+           dY = lifeCooryd(ranYd, fine1)
+
+
+           # Death: Round 40
+       elif Round == 40 and one1:
+           randomNum = random.randint(0, 4)
+           one1 = False
+
+
+           if randomNum == 0:
+               deatha += 1
+               fine1 = True
+           else:
+               fine1 = False
+           dX = lifeCoorxd(ranXd, fine1)
+           dY = lifeCooryd(ranYd, fine1)
+
+
+           # Death: Round 41+
+       elif Round > 40 and one1:
+           one1 = False
+           randomNum = random.randint(0, 3)
+
+
+           if randomNum == 0:
+               deatha += 1
+               fine1 = True
+           else:
+               fine1 = False
+           dX = lifeCoorxd(ranXd, fine1)
+           dY = lifeCooryd(ranYd, fine1)
+
+
+       # Big alien appear
+
+
+       # Display
+       screen.fill("black")
+       clock.tick(60)
+       fNum += 1
+       l1 = pygame.draw.rect(screen, white, (0, sH - 60, sW, 1))
+       laserp = pygame.draw.rect(screen, red, (lX, lY, lW, lH))
+       ship = pygame.draw.rect(screen, black, (Xp, Yp, 28, 16))
+       screen.blit(spritesheets, (Xp, Yp), (126, 1367, 28, 16))
+
+
+       num = 0
+       for i in range(8):
+           for j in range(3):
+               alien[num] = pygame.draw.rect(screen, black, (xA[num] + 150, yA[num] + 50, 32, 16))
+               if fNum < 10 and j == 0:
+                   screen.blit(spritesheets, (xA[num] + 150, yA[num] + 50), (11, 523, 32, 16))
+               elif fNum < 12 and j == 0:
+                   screen.blit(spritesheets, (xA[num] + 150, yA[num] + 50), (10, 551, 32, 16))
+               elif fNum == 12:
+                   fNum = 0
+               if fNum < 10 and j == 1:
+                   screen.blit(spritesheets, (xA[num] + 150, yA[num] + 50), (72, 521, 32, 20))
+               elif fNum < 12 and j == 1:
+                   screen.blit(spritesheets, (xA[num] + 150, yA[num] + 50), (72, 549, 32, 20))
+               elif fNum == 12:
+                   fNum = 0
+               if fNum < 10 and j == 2:
+                   screen.blit(spritesheets, (xA[num] + 150, yA[num] + 50), (132, 523, 32, 16))
+               elif fNum < 12 and j == 2:
+                   screen.blit(spritesheets, (xA[num] + 150, yA[num] + 50), (130, 551, 32, 16))
+               elif fNum == 12:
+                   fNum = 0
+
+
+               num += 1
+       for laser in alien_lasers:
+           pygame.draw.rect(screen, red, laser)
+
+
+       for i in range(40):
+           random_color = random.randint(0, 6)
+           stars[i] = pygame.draw.rect(screen, star_color[random_color],
+                                       (random_StarX[i], random_StarY[i], star_width, star_height))
+           if random_StarY[i] > 0:
+               random_StarY[i] += star_speed
+               if random_StarY[i] > sH:
+                   random_StarY[i] = random.randint(0, sH - 1)
+                   random_StarX[i] = random.randint(0, sW - 1)
+
+
+       lifeP = pygame.draw.rect(screen, lColor[ranColor], (lifeX, lifeY, lifeW, lifeH))
+       screen.blit(livesboard, (sW / 2 + 250, sH - 50))
+       screen.blit(score, (25, sH - 50))
+       screen.blit(roundTxt, (sW / 2 - 70, sH - 50))
+       screen.blit(High_scoreTxt, (High_scoreTxt.get_width(), 10))
+       gameOver()
+
+
+       pygame.display.update()
+
+
+pygame.quit()
